@@ -8,10 +8,12 @@ import OrderServices from "../services/OrderServices.js"
 const couriers = ref([]);
 const customers = ref([]);
 const isAdmin = ref(false);
+
 onMounted(async () => {
   await getCustomers();
   await getCouriers();
 });
+
 async function getCustomers() {
     try {
     const response = await CustomerServices.getCustomer(route.params.id);
@@ -21,7 +23,7 @@ async function getCustomers() {
     console.log(error);
   }
 }
-// Add, Update and Remove Customers
+
 async function getCouriers() {
     try {
     const response = await CourierServices.getCourier(route.params.id);
@@ -30,10 +32,9 @@ async function getCouriers() {
   } catch (error) {
     console.log(error);
   }
-}
-// Add, Update and Remove Couriers
 
 const orders = ref([]);
+
 
 </script>
 
@@ -47,4 +48,5 @@ const orders = ref([]);
             </v-col>
         </v-row>
     </v-container>
+
 </template>
