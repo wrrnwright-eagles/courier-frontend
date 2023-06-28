@@ -40,13 +40,13 @@ async function createAccount() {
       router.push({ name: "login" });
     })
     .catch((error) => {
-      console.log(error);
-      snackbar.value = {
-        value: true,
-        color: "error",
-        text: error.response.data.message
-      };
-    });
+  console.log(error);
+  snackbar.value = {
+    value: true,
+    color: "error",
+    text: error.response ? error.response.data.message : "An error occurred"
+  };
+});
 }
 
 async function login() {
