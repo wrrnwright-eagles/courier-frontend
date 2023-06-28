@@ -3,6 +3,7 @@ import { onMounted, ref } from "vue";
 import { useRoute } from "vue-router";
 import CourierServices from "../services/CourierServices.js";
 import CustomerServices from "../services/CustomerServices.js";
+import OrderServices from "../services/OrderServices.js"
 
 const couriers = ref([]);
 const customers = ref([]);
@@ -12,7 +13,6 @@ onMounted(async () => {
   await getCustomers();
   await getCouriers();
 });
-
 
 async function getCustomers() {
     try {
@@ -24,8 +24,6 @@ async function getCustomers() {
   }
 }
 
-// Add, Update and Remove Customers
-
 async function getCouriers() {
     try {
     const response = await CourierServices.getCourier(route.params.id);
@@ -35,12 +33,7 @@ async function getCouriers() {
     console.log(error);
   }
 
-}
-
-// Add, Update and Remove Couriers
-
-
-
+const orders = ref([]);
 
 
 </script>
