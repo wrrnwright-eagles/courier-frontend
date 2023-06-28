@@ -3,6 +3,7 @@ import { onMounted } from "vue";
 import { ref, toRaw } from "vue";
 import { useRouter } from "vue-router";
 import UserServices from "../services/UserServices.js";
+import OrderServices from "../services/UserServices.js";
 
 const router = useRouter();
 const isCreateAccount = ref(false);
@@ -20,12 +21,12 @@ const user = ref({
 
 onMounted(async () => {
   if (localStorage.getItem("user") !== null) {
-    router.push({ name: "itineraries" });
+    router.push({ name: "orders" });
   }
 });
 
-function navigateToItineraries() {
-  router.push({ name: "itineraries" });
+function navigateToOrders() {
+  router.push({ name: "orders" });
 }
  
 async function createAccount() {
@@ -49,7 +50,7 @@ async function createAccount() {
 }
 
 async function login() {
-  console.log("Logging in with user:", user.value);  // Add this line
+  console.log("Logging in with user:", user.value);  
   console.log(user.value);
   await UserServices.loginUser(user.value)  
     .then((data) => {
@@ -59,7 +60,7 @@ async function login() {
         color: "green",
         text: "Login successful!"
       };
-      router.push({ name: "itineraries" });
+      router.push({ name: "orders" });
     })
     .catch((error) => {
       console.log(error);
@@ -89,7 +90,6 @@ function closeSnackBar() {
 async function forgotPassword() {
   const email = prompt("Please enter your email:");
 
-  // Perform validation on the entered email if needed
 
   await UserServices.forgotPassword(email)
     .then(() => {
@@ -138,11 +138,6 @@ async function forgotPassword() {
         </v-card-actions>
       </v-card>
 
-      <v-card class="rounded-lg elevation-5 my-8">
-        <v-card-title class="text-center headline">
-          <v-btn class="ml-2" variant="flat" color="secondary" @click="navigateToItineraries()">View Published Itineraries</v-btn>
-        </v-card-title>
-      </v-card>
 
       <v-dialog persistent v-model="isCreateAccount" width="800">
         <v-card class="rounded-lg elevation-5">

@@ -2,29 +2,19 @@
 import ocLogo from "/oc_logo.png";
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
-import UserServices from "../services/UserServices";
-import ItineraryServices from "../services/ItineraryServices"; // import ItineraryServices
+
 
 const router = useRouter();
 const user = ref(null);
-const title = ref("Team 4 Travel Itinerary");
+const title = ref("Courier Delivery System");
 const logoURL = ref("");
-const archivedItineraries = ref([]); // create a ref for archived itineraries
+
 
 onMounted(async () => {
   logoURL.value = ocLogo;
   user.value = JSON.parse(localStorage.getItem("user"));
-  await getArchivedItineraries(); // fetch archived itineraries on mount
 });
 
-async function getArchivedItineraries() {
-  try {
-    const response = await ItineraryServices.getArchivedItineraries();
-    archivedItineraries.value = response.data;
-  } catch (error) {
-    console.error(error);
-  }
-}
 
 function logout() {
   UserServices.logoutUser()
@@ -42,54 +32,15 @@ function logout() {
 
 <template>
   <div class="gradient-background">
-        <!-- Archived Itineraries Section -->
         <div v-if="user !== null && user.isAdmin">
-      <v-card class="mb-5" color="grey lighten-3">
-        <v-card-title>
-          <v-chip v-if="itinerary && itinerary.isArchived" class="ma-2" color="secondary" label>
-  <v-icon start icon="mdi-archive"></v-icon>
-  Archived
-</v-chip>
-          Archived Itineraries
-        </v-card-title>
-        <v-card-text>
-          <v-list>
-            <v-list-item v-for="(itinerary, i) in archivedItineraries" :key="i">
-              {{ itinerary.name }}
-            </v-list-item>
-          </v-list>
-        </v-card-text>
-      </v-card>
     </div>
-    <v-app-bar color="navy" app dark>
-      <router-link :to="{ name: 'itineraries' }">
-        <v-img
-          class="mx-2"
-          :src="logoURL"
-          height="50"
-          width="50"
-          contain
-        ></v-img>
-      </router-link>
+    <v-app-bar color="green" app dark>
       <v-toolbar-title class="title">
         {{ title }}
       </v-toolbar-title>
       <v-spacer></v-spacer>
-      <v-btn class="mx-2" :to="{ name: 'itineraries' }"> Itineraries </v-btn>
       <v-btn v-if="user === null" class="mx-2" :to="{ name: 'login' }">
         Login
-      </v-btn>
-      <v-btn v-if="user !== null && user.isAdmin" class="mx-2" :to="{ name: 'pastTrips' }">
-        Past Trips
-      </v-btn>
-      <v-btn v-if="user !== null && user.isAdmin" class="mx-2" :to="{ name: 'activities' }">
-        Activities
-      </v-btn>
-      <v-btn v-if="user !== null && user.isAdmin" class="mx-2" :to="{ name: 'flights' }">
-        Flights
-      </v-btn>
-      <v-btn v-if="user !== null && user.isAdmin" class="mx-2" :to="{ name: 'hotels' }">
-        Hotels
       </v-btn>
       <v-menu v-if="user !== null" min-width="200px" rounded>
         <template v-slot:activator="{ props }">
@@ -125,6 +76,7 @@ function logout() {
 
 <style scoped>
 .gradient-background {
-  background: linear-gradient(to right, lightblue , blue);
+  background: linear-gradient(to bottom, rgb(172, 227, 200) , rgb(0, 255, 34));
 }
+
 </style>
