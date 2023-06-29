@@ -2,8 +2,11 @@
 import { onMounted, ref } from "vue";
 import { useRoute } from "vue-router";
 import CustomerServices from "../services/CustomerServices.js";
+import OrderServices from "../services/OrderServices.js";
 
 const route = useRoute();
+const customers = ref([]);
+const orders = ref([]);
 
 onMounted(async () => {
   await getCustomers();
@@ -17,6 +20,17 @@ async function getCustomers() {
   } catch (error) {
     console.log(error);
   }
+}
+
+async function getOrders() {
+    try {
+    const response = await OrderServices.getOrder(route.params.id);
+    console.log(response.data);
+    orders.value = response.data[0];
+  } catch (error) {
+    console.log(error);
+  }
+
 }
 
 </script>
