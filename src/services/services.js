@@ -4,10 +4,10 @@ var baseurl = "";
 if (process.env.NODE_ENV === "development") {
 
 
-  baseurl = "http://localhost:3201/courierapi/";
+  baseurl = "http://localhost/courierapi/";
 
 } else {
-  baseurl = "/";
+  baseurl = "/courierapi/";
 }
 
 const apiClient = axios.create({
