@@ -3,7 +3,7 @@ import { onMounted } from "vue";
 import { ref, toRaw } from "vue";
 import { useRouter } from "vue-router";
 import UserServices from "../services/UserServices.js";
-import OrderServices from "../services/UserServices.js";
+import OrderServices from "../services/OrderServices.js";
 
 const router = useRouter();
 const isCreateAccount = ref(false);
@@ -60,7 +60,7 @@ async function login() {
         color: "green",
         text: "Login successful!"
       };
-      router.push({ name: "orders" });
+      router.push({ name: "dashboard" });
     })
     .catch((error) => {
       console.log(error);
