@@ -15,8 +15,8 @@ import { useRoute } from "vue-router";
     <div class="text-section">
       <!-- Text container -->
       <div class="text-container">
-        <h2>Text Container</h2>
-        <p>This is the text content you want to display.</p>
+        <h2>Route Instructions</h2>
+        <p>Step by Step Instructions</p>
       </div>
     </div>
   </div>
@@ -26,17 +26,18 @@ import { useRoute } from "vue-router";
 <style scoped>
 .container {
   display: flex;
-  height: 100vh; /* Set the container to fill the full height of the viewport */
+  height: 100%; /* Set the container to fill the full height of the viewport */
 }
 
 .map-section {
-  flex: 1; /* Occupy half of the container's width */
+  flex: 2; /* Occupy half of the container's width */
   background-color: #f1f1f1; /* Add a background color to the map section */
 }
 
 .map-image {
-  width: 100%; /* Ensure the map image occupies the entire map section */
-  height: 100%; /* Ensure the map image occupies the entire map section */
+  padding: 10px;
+  width: 100%;
+  height: 100%;
   object-fit: cover; /* Maintain aspect ratio and cover the entire map section */
 }
 
@@ -48,5 +49,6 @@ import { useRoute } from "vue-router";
 .text-container {
   background-color: #fff; /* Add a background color to the text container */
   height: 100%; /* Ensure the text container occupies the entire text section */
+  
 }
 </style>
