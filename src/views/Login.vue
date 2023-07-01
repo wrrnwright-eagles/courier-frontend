@@ -3,7 +3,6 @@ import { onMounted } from "vue";
 import { ref, toRaw } from "vue";
 import { useRouter } from "vue-router";
 import UserServices from "../services/UserServices.js";
-import OrderServices from "../services/OrderServices.js";
 
 const router = useRouter();
 const isCreateAccount = ref(false);
@@ -17,17 +16,11 @@ const user = ref({
   lastName: "",
   email: "",
   password: "",
+  isAdmin: false,
+  isClerk: false, 
+  isCourier: false,
 });
 
-onMounted(async () => {
-  if (localStorage.getItem("user") !== null) {
-    router.push({ name: "orders" });
-  }
-});
-
-function navigateToOrders() {
-  router.push({ name: "orders" });
-}
  
 async function createAccount() {
   await UserServices.addUser(user.value)
@@ -60,7 +53,7 @@ async function login() {
         color: "green",
         text: "Login successful!"
       };
-      router.push({ name: "dashboard" });
+      router.push({ name: "map" })
     })
     .catch((error) => {
       console.log(error);
@@ -71,8 +64,6 @@ async function login() {
       };
     });
 }
-
-
 
 
 function openCreateAccount() {

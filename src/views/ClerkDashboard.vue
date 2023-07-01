@@ -21,8 +21,19 @@ const newOrder = ref({
 })
 
 onMounted(async () => {
+  await getCustomers();
   await getOrders();
 });
+
+async function getCustomers() {
+    try {
+    const response = await CustomerServices.getCustomer(route.params.id);
+    console.log(response.data);
+    customers.value = response.data[0];
+  } catch (error) {
+    console.log(error);
+  }
+}
 
 async function getOrders() {
     try {
@@ -42,7 +53,7 @@ async function getOrders() {
         <v-row align="center">
             <v-col cols="10">
                 <v-card-title class="pl-0 text-h4 font-weight-bold">
-                Courier Dashboard
+                Clerk Dashboard
                 </v-card-title>
             </v-col>
         </v-row>
@@ -50,6 +61,21 @@ async function getOrders() {
             <v-col cols="6">
               <div class="order-container">
                 <h2>Orders</h2>
+                <div class="icon">
+                  <v-icon size="x-small" @click="openAddOrder()">
+                    mdi-plus
+                  </v-icon>
+                </div>
+                <div class="icon">
+                  <v-icon size="x-small" @click="openEditOrder(item)">
+                    mdi-pencil
+                  </v-icon>
+                </div>
+                <div class="icon">
+                  <v-icon size="x-small" @click="deleteOrder(item)">
+                    mdi-trash-can
+                  </v-icon>
+                </div>
               </div>
                 <v-list>
                     <v-list-item v-for="order in orders" :key="order.id">

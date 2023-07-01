@@ -7,19 +7,29 @@ import OrderServices from "../services/OrderServices.js"
 import ClerkServices from "../services/ClerkServices.js";
 
 const route = useRoute();
+
 const couriers = ref([]);
-const customers = ref([]);
-const orders = ref([]);
-const clerks = ref([]);
-const isAdmin = ref(false);
+const selectedCourier = ref({});
 const isAddCourier = ref(false);
 const isEditCourier = ref(false);
+
+const customers = ref([]);
+const selectedCustomer = ref({});
 const isAddCustomer = ref(false);
 const isEditCustomer = ref(false);
-const isAddClerk = ref(false);
-const isEditClerk = ref(false);
+
+const orders = ref([]);
+const selectedOrder = ref({});
 const isAddOrder = ref(false);
 const isEditOrder = ref(false);
+
+const clerks = ref([]);
+const selectedClerk = ref({});
+const isAddClerk = ref(false);
+const isEditClerk = ref(false);
+const isClerk = ref(false);
+
+const isAdmin = ref(false);
 
 const newCourier = ref({
   id: undefined,
@@ -399,7 +409,7 @@ async function deleteOrder(id) {
                   </v-icon>
                 </div>
                 <div class="icon">
-                  <v-icon size="x-small" @click="openEditCourier(courier)"> <!-- fix this -->
+                  <v-icon size="x-small" @click="openEditCourier(item)"> <!-- fix this -->
                     mdi-pencil
                   </v-icon>
                 </div>
@@ -411,7 +421,8 @@ async function deleteOrder(id) {
               </div>
               <v-list>
                   <v-list-item v-for="courier in couriers" :key="courier.id">
-                      <v-checkbox v-model="courier.selected" :label="courier.name"></v-checkbox>
+                      <v-list-item-title>{{ courier.name }}</v-list-item-title>
+                      <!--v-checkbox v-model="courier.selected" :label="courier.name"></v-checkbox-->
                   </v-list-item>
               </v-list>
             </v-col>
@@ -424,7 +435,7 @@ async function deleteOrder(id) {
                   </v-icon>
                 </div>
                 <div class="icon">
-                  <v-icon size="x-small" @click="openEditCustomer(item)">
+                  <v-icon size="x-small" @click="openEditCustomer(selectedCustomer)">
                     mdi-pencil
                   </v-icon>
                 </div>
@@ -478,7 +489,7 @@ async function deleteOrder(id) {
           </v-card-item>
           <v-card-text> <!-- fix this -->
             <v-select 
-              v-model="courier"
+              v-model="selectedCourier"
               :items="couriers"
               item-title="courier.name"
               label="Courier"
