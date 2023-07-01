@@ -10,3 +10,43 @@ body {
 .v-toolbar {
     background-color: rgb(1, 58, 11) !important;
 }
+
+.courier-container {
+  display: flex;
+  align-items: center;
+}
+
+.courier-container h2 {
+  margin-right: 10px; /* Add some spacing between the elements */
+}
+
+.customer-container {
+  display: flex;
+  align-items: center;
+}
+
+.customer-container h2 {
+  margin-right: 10px; /* Add some spacing between the elements */
+}
+
+.clerk-container {
+  display: flex;
+  align-items: center;
+}
+
+.clerk-container h2 {
+  margin-right: 10px; /* Add some spacing between the elements */
+}
+
+.order-container {
+  display: flex;
+  align-items: center;
+}
+
+.order-container h2 {
+  margin-right: 10px; /* Add some spacing between the elements */
+}
+
+.icon {
+  margin-right: 10px;
+}
