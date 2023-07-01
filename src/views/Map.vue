@@ -1,6 +1,8 @@
 <script setup> 
 import { onMounted, ref } from "vue";
 import { useRoute } from "vue-router";
+import PathServices from "../services/PathServices.js";
+import OrderServices from "../services/OrderServices.js";
 
 
 
