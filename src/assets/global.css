@@ -50,3 +50,32 @@ body {
 .icon {
   margin-right: 10px;
 }
+
+/* Map Vue Styling */
+.map-container {
+  display: flex;
+  height: 100%; /* Set the container to fill the full height of the viewport */
+}
+
+.map-section {
+  flex: 2; /* Occupy half of the container's width */
+  background-color: #f1f1f1; /* Add a background color to the map section */
+}
+
+.map-image {
+  padding: 10px;
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* Maintain aspect ratio and cover the entire map section */
+}
+
+.text-section {
+  flex: 1; /* Occupy half of the container's width */
+  padding: 20px; /* Add some padding to the text section */
+}
+
+.text-container {
+  background-color: #fff; /* Add a background color to the text container */
+  height: 100%; /* Ensure the text container occupies the entire text section */
+  
+}

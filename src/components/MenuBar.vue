@@ -33,8 +33,6 @@ function logout() {
 
 <template>
   <div class="gradient-background">
-        <div v-if="user !== null && user.isAdmin">
-    </div>
     <v-app-bar color="green" app dark>
       <v-toolbar-title class="title">
         {{ title }}
@@ -46,7 +44,13 @@ function logout() {
       <v-btn v-if="user !== null && user.isAdmin" class="mx-2" :to="{ name: 'dashboard' }">
         Dashboard
       </v-btn>
-      <v-btn v-if="user !== null && user.isAdmin" class="mx-2" :to="{ name: 'map' }">
+      <v-btn v-if="user !== null && user.isCourier" class="mx-2" :to="{ name: 'courierdashboard' }">
+        Dashboard
+      </v-btn>
+      <v-btn v-if="user !== null && user.isClerk" class="mx-2" :to="{ name: 'clerkdashboard' }">
+        Dashboard
+      </v-btn>
+      <v-btn v-if="user !== null" class="mx-2" :to="{ name: 'map' }">
         Map
       </v-btn>
       <v-menu v-if="user !== null" min-width="200px" rounded>
