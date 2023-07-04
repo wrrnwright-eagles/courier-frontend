@@ -6,6 +6,7 @@ import CustomerServices from "../services/CustomerServices.js";
 import OrderServices from "../services/OrderServices.js"
 import ClerkServices from "../services/ClerkServices.js";
 
+
 const route = useRoute();
 
 const couriers = ref([]);
@@ -313,6 +314,7 @@ async function addOrder() {
 }
 
 function openAddOrder() {
+  console.log("openAddOrder is called");
   newOrder.value.date = undefined;
   newOrder.value.time = undefined;
   newOrder.value.pickup = undefined;
@@ -364,291 +366,260 @@ async function deleteOrder(id) {
 
 </script>
 
-
 <template>
-    <v-container>
-        <v-row align="center">
-            <v-col cols="12">
-                <v-card-title class="pl-0 text-h4 font-weight-bold">
-                Dashboard
-                </v-card-title>
-            </v-col>
-        </v-row>
+  <v-container>
+    <v-row align="center">
+      <v-col cols="12">
+        <v-card-title class="pl-0 text-h4 font-weight-bold">
+          Dashboard
+        </v-card-title>
+      </v-col>
+    </v-row>
+    <v-row>
+      <v-col cols="11">
+        <div class="order-container rounded" style="background-color: darkgreen;">
+          <h2 style="color: white;">Orders</h2>
+          <div class="icon">
+            <v-icon size="x-small" @click="openAddOrder()">
+              mdi-plus
+            </v-icon>
+          </div>
+          <div class="icon">
+            <v-icon size="x-small" @click="openEditOrder(item)">
+              mdi-pencil
+            </v-icon>
+          </div>
+          <div class="icon">
+            <v-icon size="x-small" @click="deleteOrder(item)">
+              mdi-trash-can
+            </v-icon>
+          </div>
+        </div>
+        <v-list>
+          <v-list-item v-for="order in orders" :key="order.id">
+            <v-list-item-title>{{ order.date }} {{ order.pickup }}</v-list-item-title>
+          </v-list-item>
+        </v-list>
+      </v-col>
+    </v-row>
+    <v-row>
+      <v-col cols="3">
+        <div class="courier-container" style="background-color: darkgreen; border-radius: 15px; margin-bottom: 18px;">
+          <h2 style="text-align: center; color: white;">Couriers</h2>
+          <div class="icon">
+            <v-icon size="x-small" @click="openAddCourier()">
+              mdi-plus
+            </v-icon>
+          </div>
+          <div class="icon">
+            <v-icon size="x-small" @click="openEditCourier(item)">
+              mdi-pencil
+            </v-icon>
+          </div>
+          <div class="icon">
+            <v-icon size="x-small" @click="deleteCourier(item)">
+              mdi-trash-can
+            </v-icon>
+          </div>
+        </div>
+        <v-list>
+          <v-list-item v-for="courier in couriers" :key="courier.id" class="courier-item">
+            <v-list-item-title class="courier-name">{{ courier.name }}</v-list-item-title>
+            <v-row class="courier-row text-right">
+              <v-col cols="6" class="courier-col">
+                <v-list-item-subtitle>Courier Number:</v-list-item-subtitle>
+              </v-col>
+              <v-col cols="1" class="courier-col">
+                <v-list-item-subtitle>{{ courier.courierNumber }}</v-list-item-subtitle>
+              </v-col>
+            </v-row>
+          </v-list-item>
+        </v-list>
+        <div class="clerk-container" style="background-color: darkgreen; border-radius: 15px; margin-bottom: 18px;">
+          <h2 style="text-align: center; color: white;">Clerks</h2>
+          <div class="icon">
+            <v-icon size="x-small" @click="openAddClerk()">
+              mdi-plus
+            </v-icon>
+          </div>
+          <div class="icon">
+            <v-icon size="x-small" @click="openEditClerk(item)">
+              mdi-pencil
+            </v-icon>
+          </div>
+          <div class="icon">
+            <v-icon size="x-small" @click="deleteClerk(item)">
+              mdi-trash-can
+            </v-icon>
+          </div>
+        </div>
+        <v-list>
+          <v-list-item v-for="clerk in clerks" :key="clerk.id" class="clerk-item">
+            <v-list-item-title class="clerk-name">{{ clerk.name }}</v-list-item-title>
+            <v-row class="clerk-row text-right">
+              <v-col cols="5" class="clerk-col">
+                <v-list-item-subtitle class="subtitle-no-margin">Clerk Number:</v-list-item-subtitle>
+              </v-col>
+              <v-col cols="1" class="clerk-col">
+                <v-list-item-subtitle class="subtitle-no-margin">{{ clerk.clerkNumber }}</v-list-item-subtitle>
+              </v-col>
+            </v-row>
+          </v-list-item>
+        </v-list>
+      </v-col>
+      <v-col cols="8">
+        <div class="customer-container" style="background-color: darkgreen; border-radius: 15px; margin-bottom: 18px;">
+          <h2 style="text-align: center; color: white;">Customers</h2>
+          <div class="icon">
+            <v-icon size="x-small" @click="openAddCustomer()">
+              mdi-plus
+            </v-icon>
+          </div>
+          <div class="icon">
+            <v-icon size="x-small" @click="openEditCustomer(selectedCustomer)">
+              mdi-pencil
+            </v-icon>
+          </div>
+          <div class="icon">
+            <v-icon size="x-small" @click="deleteCustomer(item)">
+              mdi-trash-can
+            </v-icon>
+          </div>
+        </div>
         <v-row>
-            <v-col cols="6">
-              <div class="order-container">
-                <h2>Orders</h2>
-                <div class="icon">
-                  <v-icon size="x-small" @click="openAddOrder()">
-                    mdi-plus
-                  </v-icon>
-                </div>
-                <div class="icon">
-                  <v-icon size="x-small" @click="openEditOrder(item)">
-                    mdi-pencil
-                  </v-icon>
-                </div>
-                <div class="icon">
-                  <v-icon size="x-small" @click="deleteOrder(item)">
-                    mdi-trash-can
-                  </v-icon>
-                </div>
-              </div>
-                <v-list>
-                    <v-list-item v-for="order in orders" :key="order.id">
-                        <v-list-item-title>{{ order.date }} {{ order.pickup }}</v-list-item-title>
-                    </v-list-item>
-                </v-list>
-            </v-col>
-            <v-col cols="6">
-              <div class="courier-container">
-                <h2>Couriers</h2>
-                <div class="icon">
-                  <v-icon size="x-small" @click="openAddCourier()">
-                    mdi-plus
-                  </v-icon>
-                </div>
-                <div class="icon">
-                  <v-icon size="x-small" @click="openEditCourier(item)"> <!-- fix this -->
-                    mdi-pencil
-                  </v-icon>
-                </div>
-                <div class="icon">
-                  <v-icon size="x-small" @click="deleteCourier(item)">
-                    mdi-trash-can
-                  </v-icon>
-                </div>
-              </div>
-              <v-list>
-                  <v-list-item v-for="courier in couriers" :key="courier.id">
-                      <v-list-item-title>{{ courier.name }}</v-list-item-title>
-                      <!--v-checkbox v-model="courier.selected" :label="courier.name"></v-checkbox-->
-                  </v-list-item>
-              </v-list>
-            </v-col>
-            <v-col cols="6">
-              <div class="customer-container">
-                <h2>Customers</h2>
-                <div class="icon">
-                  <v-icon size="x-small" @click="openAddCustomer()">
-                    mdi-plus
-                  </v-icon>
-                </div>
-                <div class="icon">
-                  <v-icon size="x-small" @click="openEditCustomer(selectedCustomer)">
-                    mdi-pencil
-                  </v-icon>
-                </div>
-                <div class="icon">
-                  <v-icon size="x-small" @click="deleteCustomer(item)">
-                    mdi-trash-can
-                  </v-icon>
-                </div>
-              </div>
-                <v-list>
-                    <v-list-item v-for="customer in customers" :key="customer.id">
-                        <v-list-item-title>{{ customer.name }}</v-list-item-title>
-                    </v-list-item>
-                </v-list>
-            </v-col>
-            <v-col cols="6">
-              <div class="clerk-container">
-                <h2>Clerks</h2>
-                <div class="icon">
-                  <v-icon size="x-small" @click="openAddClerk()">
-                    mdi-plus
-                  </v-icon>
-                </div>
-                <div class="icon">
-                  <v-icon size="x-small" @click="openEditClerk(item)">
-                    mdi-pencil
-                  </v-icon>
-                </div>
-                <div class="icon">
-                  <v-icon size="x-small" @click="deleteClerk(item)">
-                    mdi-trash-can
-                  </v-icon>
-                </div>
-              </div>
-                <v-list>
-                    <v-list-item v-for="clerk in clerks" :key="clerk.id">
-                        <v-list-item-title>{{ clerk.name }}</v-list-item-title>
-                    </v-list-item>
-                </v-list>
-            </v-col>
+          <v-col cols="6">
+            <v-list>
+              <v-list-item v-for="(customer, index) in customers.slice(0, 5)" :key="customer.id" class="customer-item">
+                <v-list-item-title class="customer-name">{{ customer.name }}</v-list-item-title>
+                <v-row class="customer-row">
+                  <v-col cols="6" class="py-0">
+                    <v-list-item-subtitle>Customer:</v-list-item-subtitle>
+                  </v-col>
+                  <v-col cols="6" class="py-0">
+                    <v-list-item-subtitle>{{ customer.customerNumber }}</v-list-item-subtitle>
+                  </v-col>
+                </v-row>
+                <v-row class="customer-row">
+                  <v-col cols="6" class="py-0">
+                    <v-list-item-subtitle>Location:</v-list-item-subtitle>
+                  </v-col>
+                  <v-col cols="6" class="py-0">
+                    <v-list-item-subtitle>{{ customer.locationDescription }}</v-list-item-subtitle>
+                  </v-col>
+                </v-row>
+                <v-row class="customer-row">
+                  <v-col cols="6" class="py-0">
+                    <v-list-item-subtitle>Delivery:</v-list-item-subtitle>
+                  </v-col>
+                  <v-col cols="6" class="py-0">
+                    <v-list-item-subtitle>{{ customer.deliveryInstructions }}</v-list-item-subtitle>
+                  </v-col>
+                </v-row>
+              </v-list-item>
+            </v-list>
+          </v-col>
+          <v-col cols="6">
+            <v-list>
+              <v-list-item v-for="(customer, index) in customers.slice(5)" :key="customer.id" class="customer-item">
+                <v-list-item-title class="customer-name">{{ customer.name }}</v-list-item-title>
+                <v-row class="customer-row">
+                  <v-col cols="6" class="py-0">
+                    <v-list-item-subtitle>Customer:</v-list-item-subtitle>
+                  </v-col>
+                  <v-col cols="6" class="py-0">
+                    <v-list-item-subtitle>{{ customer.customerNumber }}</v-list-item-subtitle>
+                  </v-col>
+                </v-row>
+                <v-row class="customer-row">
+                  <v-col cols="6" class="py-0">
+                    <v-list-item-subtitle>Location:</v-list-item-subtitle>
+                  </v-col>
+                  <v-col cols="6" class="py-0">
+                    <v-list-item-subtitle>{{ customer.locationDescription }}</v-list-item-subtitle>
+                  </v-col>
+                </v-row>
+                <v-row class="customer-row">
+                  <v-col cols="6" class="py-0">
+                    <v-list-item-subtitle>Delivery:</v-list-item-subtitle>
+                  </v-col>
+                  <v-col cols="6" class="py-0">
+                    <v-list-item-subtitle>{{ customer.deliveryInstructions }}</v-list-item-subtitle>
+                  </v-col>
+                </v-row>
+              </v-list-item>
+            </v-list>
+          </v-col>
         </v-row>
-    </v-container>
-
-    <!-- Dialog window for open and edit Courier-->
-    <v-dialog persistent :model-value="isAddCourier || isEditCourier" width="800">
-        <v-card class="rounded-lg elevation-5">
-          <v-card-item>
-            <v-card-title class="headline mb-2"
-              >{{ isAddCourier ? "Add Courier" : isEditCourier ? "Edit Courier" : "" }}
-            </v-card-title>
-          </v-card-item>
-          <v-card-text> <!-- fix this -->
-            <v-select 
-              v-model="selectedCourier"
-              :items="couriers"
-              item-title="courier.name"
-              label="Courier"
-              return-object
-              multiple
-              chips
-            ></v-select>
-            <v-text-field
-              v-model="newCourier.courierNumber"
-              :item="courierNumber"
-              label="Courier Number"
-              required
-            ></v-text-field>
-            <v-text-field
-              v-model="newCourier.name"
-              :items="name"
-              label="Name"
-              required
-            ></v-text-field>
-          </v-card-text>
-          <v-card-actions>
-            <v-spacer></v-spacer>
-            <v-btn
-              variant="flat"
-              color="secondary"
-              @click="isAddCourier ? closeAddCourier() : isEditCourier ? closeEditCourier() : false"
-              >Close</v-btn
-            >
-            <v-btn
-              variant="flat"
-              color="primary"
-              @click="
-                isAddCourier ? addCourier() : isEditCourier ? updateCourier() : false
-              "
-              >{{
-                isAddCourier ? "Add Courier" : isEditCourier ? "Update Courier" : ""
-              }}</v-btn
-            >
-          </v-card-actions>
-        </v-card>
-      </v-dialog>
-
-          <!-- Dialog window for open and edit Customer-->
-    <v-dialog persistent :model-value="isAddCustomer || isEditCustomer" width="800">
-        <v-card class="rounded-lg elevation-5">
-          <v-card-item>
-            <v-card-title class="headline mb-2"
-              >{{ isAddCustomer ? "Add Customer" : isEditCustomer ? "Edit Customer" : "" }}
-            </v-card-title>
-          </v-card-item>
-          <v-card-text> <!-- fix this -->
-            <v-select
-              v-model="customer"
-              :items="customers"
-              item-title="customer.name"
-              label="Customer"
-              return-object
-              multiple
-              chips
-            ></v-select>
-            <v-text-field
-              v-model="newCustomer.customerNumber"
-              :item="customerNumber"
-              label="Customer Number"
-              required
-            ></v-text-field>
-            <v-text-field
-              v-model="newCustomer.name"
-              :items="name"
-              label="Customer Name"
-              required
-            ></v-text-field>
-            <v-text-field
-              v-model="newCustomer.location"
-              :items="location"
-              label="Customer Location"
-              required
-            ></v-text-field>
-            <v-text-field
-              v-model="newCustomer.deliveryInstructions"
-              :items="deliveryInstructions"
-              label="Customer Delivery Instructions"
-              required
-            ></v-text-field>
-          </v-card-text>
-          <v-card-actions>
-            <v-spacer></v-spacer>
-            <v-btn
-              variant="flat"
-              color="secondary"
-              @click="isAddCustomer ? closeAddCustomer() : isEditCustomer ? closeEditCustomer() : false"
-              >Close</v-btn
-            >
-            <v-btn
-              variant="flat"
-              color="primary"
-              @click="
-                isAddCustomer ? addCustomer() : isEditCustomer ? updateCustomer() : false
-              "
-              >{{
-                isAddCustomer ? "Add Customer" : isEditCustomer ? "Update Customer" : ""
-              }}</v-btn
-            >
-          </v-card-actions>
-        </v-card>
-      </v-dialog>
-
-          <!-- Dialog window for open and edit Clerk-->
-    <v-dialog persistent :model-value="isAddClerk || isEditClerk" width="800">
-        <v-card class="rounded-lg elevation-5">
-          <v-card-item>
-            <v-card-title class="headline mb-2"
-              >{{ isAddClerk ? "Add Clerk" : isEditClerk ? "Edit Clerk" : "" }}
-            </v-card-title>
-          </v-card-item>
-          <v-card-text> <!-- fix this -->
-            <v-select
-              v-model="clerk"
-              :items="clerks"
-              item-title="clerk.name"
-              label="Clerk"
-              return-object
-              multiple
-              chips
-            ></v-select>
-            <v-text-field
-              v-model="newClerk.clerkNumber"
-              :item="clerkNumber"
-              label="Clerk Number"
-              required
-            ></v-text-field>
-            <v-text-field
-              v-model="newClerk.name"
-              :items="name"
-              label="Name"
-              required
-            ></v-text-field>
-          </v-card-text>
-          <v-card-actions>
-            <v-spacer></v-spacer>
-            <v-btn
-              variant="flat"
-              color="secondary"
-              @click="isAddClerk ? closeAddClerk() : isEditClerk ? closeEditClerk() : false"
-              >Close</v-btn
-            >
-            <v-btn
-              variant="flat"
-              color="primary"
-              @click="
-                isAddClerk ? addClerk() : isEditClerk ? updateClerk() : false
-              "
-              >{{
-                isAddClerk ? "Add Clerk" : isEditClerk ? "Update Clerk" : ""
-              }}</v-btn
-            >
-          </v-card-actions>
-        </v-card>
-      </v-dialog>
-
-
+      </v-col>
+    </v-row>
+  </v-container>
 </template>
+
+<style scoped>
+.customer-name {
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+.customer-row {
+  margin-bottom: 5px;
+}
+
+.customer-item {
+  border-bottom: 2px solid black;
+  padding-bottom: 10px;
+  margin-bottom: 2px;
+}
+
+.courier-name {  
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+.clerk-name {
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.courier-row,
+.clerk-row {
+  margin-bottom: 5px;
+}
+
+.courier-item,
+.clerk-item {
+  border-bottom: 2px solid black;
+  padding-bottom: px;
+  margin-bottom: 2px;
+}
+
+.order-container {
+  padding: 10px;
+  border-radius: 18px;
+  border-radius: 18px;
+}
+
+.courier-container  {
+  padding: 10px;
+  margin-bottom: 1px;
+  border-radius: 18px;
+}
+.clerk-container {
+  padding: 10px;
+  margin-top: 20px;
+  border-radius: 18px;
+}  
+
+.customer-container {
+  padding: 10px;
+  border-radius: 18px;
+}
+
+.courier-col,
+.clerk-col {
+  padding-right: 0; /* Remove margin-right */
+}
+
+.subtitle-no-margin {
+  margin-right: 0; /* Remove margin-right for subtitles */
+}
+</style>
