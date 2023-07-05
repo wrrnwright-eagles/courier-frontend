@@ -6,9 +6,12 @@ import CustomerServices from "../services/CustomerServices.js";
 import OrderServices from "../services/OrderServices.js"
 import ClerkServices from "../services/ClerkServices.js";
 
-
 const route = useRoute();
-
+const snackbar = ref({
+  value: false,
+  color: '',
+  text: ''
+});
 const couriers = ref([]);
 const selectedCourier = ref({});
 const isAddCourier = ref(false);
@@ -42,7 +45,8 @@ const newCustomer = ref({
   id: undefined,
   customerNumber: undefined,
   name: undefined,
-  location: undefined,
+  locationDescription: undefined,
+  locationNode: undefined, 
   deliveryInstructions: undefined,
 });
 
@@ -110,23 +114,28 @@ async function getClerks() {
 // CRUD for Couriers
 async function addCourier() {
   isAddCourier.value = false;
-  delete newCourier.id;
+  delete newCourier.value.id;
   await CourierServices.addCourier(newCourier.value)
     .then(() => {
-      snackbar.value.value = true;
-      snackbar.value.color = "green";
-      snackbar.value.text = `${newCourier.value.name} added successfully!`;
+      snackbar.value = {
+        value: true,
+        color: "green",
+        text: `${newCourier.value.name} added successfully!`
+      };
+      getCouriers();
     })
     .catch((error) => {
       console.log(error);
-      snackbar.value.value = true;
-      snackbar.value.color = "error";
-      snackbar.value.text = error.response.data.message;
+      snackbar.value = {
+        value: true,
+        color: "red",
+        text: error.response.data.message
+      };
     });
-  await getCouriers();
 }
 
 function openAddCourier() {
+  console.log("openAddCourieris called");
   newCourier.value.courierNumber = undefined;
   newCourier.value.name = undefined;
   isAddCourier.value = true;
@@ -171,23 +180,28 @@ async function deleteCourier(id) {
 // CRUD for Clerks
 async function addClerk() {
   isAddClerk.value = false;
-  delete newClerk.id;
+  delete newClerk.value.id;
   await ClerkServices.addClerk(newClerk.value)
     .then(() => {
-      snackbar.value.value = true;
-      snackbar.value.color = "green";
-      snackbar.value.text = `${newClerk.value.name} added successfully!`;
+      snackbar.value = {
+        value: true,
+        color: "green",
+        text: `${newClerk.value.name} added successfully!`
+      };
+      getClerks();
     })
     .catch((error) => {
       console.log(error);
-      snackbar.value.value = true;
-      snackbar.value.color = "error";
-      snackbar.value.text = error.response.data.message;
+      snackbar.value = {
+        value: true,
+        color: "red",
+        text: error.response.data.message
+      };
     });
-  await getClerks();
 }
 
 function openAddClerk() {
+  console.log("openAddClerk is called");
   newClerk.value.clerkNumber = undefined;
   newClerk.value.name = undefined;
   isAddClerk.value = true;
@@ -229,32 +243,39 @@ async function deleteClerk(id) {
   }
 }
 
-// CRUD for Customers
 async function addCustomer() {
   isAddCustomer.value = false;
-  delete newCustomer.id;
+  delete newCustomer.value.id;
   await CustomerServices.addCustomer(newCustomer.value)
     .then(() => {
-      snackbar.value.value = true;
-      snackbar.value.color = "green";
-      snackbar.value.text = `${newCustomer.value.name} added successfully!`;
+      snackbar.value = {
+        value: true,
+        color: "green",
+        text: `${newCustomer.value.name} added successfully!`
+      };
+      getCustomers();
     })
     .catch((error) => {
       console.log(error);
-      snackbar.value.value = true;
-      snackbar.value.color = "error";
-      snackbar.value.text = error.response.data.message;
+      snackbar.value = {
+        value: true,
+        color: "red",
+        text: error.response.data.message
+      };
     });
-  await getCustomers();
 }
 
 function openAddCustomer() {
+  console.log("openAddCustomer is called");
   newCustomer.value.customerNumber = undefined;
   newCustomer.value.name = undefined;
-  newCustomer.value.location = undefined;
+  newCustomer.value.locationDescription = undefined;
+  newCustomer.value.locationNode = undefined; 
   newCustomer.value.deliveryInstructions = undefined;
   isAddCustomer.value = true;
 }
+
+
 
 function closeAddCustomer() {
   isAddCustomer.value = false;
@@ -297,20 +318,24 @@ async function deleteCustomer(id) {
 // CRUD for Orders
 async function addOrder() {
   isAddOrder.value = false;
-  delete newOrder.id;
+  delete newOrder.value.id;
   await OrderServices.addOrder(newOrder.value)
     .then(() => {
-      snackbar.value.value = true;
-      snackbar.value.color = "green";
-      snackbar.value.text = `${newOrder.value.name} added successfully!`;
+      snackbar.value = {
+        value: true,
+        color: "green",
+        text: `${newOrder.value.name} added successfully!`
+      };
+      getOrders();
     })
     .catch((error) => {
       console.log(error);
-      snackbar.value.value = true;
-      snackbar.value.color = "error";
-      snackbar.value.text = error.response.data.message;
+      snackbar.value = {
+        value: true,
+        color: "red",
+        text: error.response.data.message
+      };
     });
-  await getOrders();
 }
 
 function openAddOrder() {
@@ -364,9 +389,90 @@ async function deleteOrder(id) {
   }
 }
 
+snackbar.value = {
+  value: true,
+  color: "green",
+  text: `${newCourier.value.name} added successfully!`
+};
+
+
 </script>
 
-<template>
+
+  <template>
+
+    <!-- Add Clerk Form -->
+    <v-dialog v-model="isAddClerk">
+      <v-card>
+        <v-card-title>Add Clerk</v-card-title>
+        <v-card-text>
+          <v-form @submit.prevent="addClerk">
+            <v-text-field label="Clerk Number" v-model="newClerk.clerkNumber" required />
+            <v-text-field label="Name" v-model="newClerk.name" required />
+            <v-spacer></v-spacer>
+            <v-btn color="green darken-1" text @click="closeAddClerk">Cancel</v-btn>
+            <v-btn color="green darken-1" text @click="addClerk">Add Clerk</v-btn>
+          </v-form>
+        </v-card-text>
+      </v-card>
+    </v-dialog>
+    
+
+    <!-- Add Customer Form -->
+    <v-dialog v-model="isAddCustomer">
+  <v-card>
+    <v-card-title>Add Customer</v-card-title>
+    <v-card-text>
+      <v-form @submit.prevent="addCustomer">
+        <v-text-field label="Customer Number" v-model="newCustomer.customerNumber" required />
+        <v-text-field label="Name" v-model="newCustomer.name" required />
+        <v-text-field label="Location Description" v-model="newCustomer.locationDescription" required />
+        <v-text-field label="Location Node" v-model="newCustomer.locationNode" required />
+        <v-text-field label="Delivery Instructions" v-model="newCustomer.deliveryInstructions" required />
+        <v-spacer></v-spacer>
+        <v-btn color="green darken-1" text @click="closeAddCustomer">Cancel</v-btn>
+        <v-btn color="green darken-1" text @click="addCustomer">Add Customer</v-btn>
+      </v-form>
+    </v-card-text>
+  </v-card>
+</v-dialog>
+
+
+    <!-- Add Courier Form -->
+    <v-dialog v-model="isAddCourier">
+      <v-card>
+        <v-card-title>Add Courier</v-card-title>
+        <v-card-text>
+          <v-form @submit.prevent="addCourier">
+            <v-text-field label="Courier Number" v-model="newCourier.courierNumber" required />
+            <v-text-field label="Name" v-model="newCourier.name" required />
+            <v-spacer></v-spacer>
+            <v-btn color="green darken-1" text @click="closeAddCourier">Cancel</v-btn>
+            <v-btn color="green darken-1" text @click="addCourier">Add Courier</v-btn>
+          </v-form>
+        </v-card-text>
+      </v-card>
+    </v-dialog>
+
+    <!-- Add Order Form -->
+    <v-dialog v-model="isAddOrder">
+      <v-card>
+        <v-card-title>Add Order</v-card-title>
+        <v-card-text>
+          <v-form @submit.prevent="addOrder">
+            <v-text-field label="Date" v-model="newOrder.date" required />
+            <v-text-field label="Time" v-model="newOrder.time" required />
+            <v-text-field label="Pickup" v-model="newOrder.pickup" required />
+            <v-text-field label="Delivery" v-model="newOrder.delivery" required />
+            <v-text-field label="Courier" v-model="newOrder.courier" required />
+            <v-text-field label="Customer" v-model="newOrder.customer" required />
+            <v-spacer></v-spacer>
+            <v-btn color="green darken-1" text @click="closeAddOrder">Cancel</v-btn>
+            <v-btn color="green darken-1" text @click="addOrder">Add Order</v-btn>
+          </v-form>
+        </v-card-text>
+      </v-card>
+    </v-dialog>
   <v-container>
     <v-row align="center">
       <v-col cols="12">
