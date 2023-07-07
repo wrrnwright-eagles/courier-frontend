@@ -2,7 +2,8 @@
 import { onMounted, ref } from "vue";
 import { useRoute } from "vue-router";
 import CourierServices from "../services/CourierServices.js";
-import CustomerServices from "../services/CustomerServices.js";
+import PickupCustomerServices from "../services/PickupCustomerServices.js";
+import DeliveryCustomerServices from "../services/DeliveryCustomerServices.js";
 import OrderServices from "../services/OrderServices.js"
 import ClerkServices from "../services/ClerkServices.js";
 import courierImage from '../courier.png';
@@ -25,7 +26,8 @@ const selectedCourier = ref({
 const isAddCourier = ref(false);
 const isEditCourier = ref(false);
 const isDeleteCustomer = ref(false);
-const customers = ref([]);
+const deliveryCustomers = ref([]);
+const pickupCustomers = ref([]);
 const selectedCustomer = ref({});
 const isAddCustomer = ref(false);
 const isEditCustomer = ref(false);
@@ -72,25 +74,35 @@ const newOrder = ref({
   id: undefined,
   date: undefined,
   time: undefined,
-  pickup: undefined,
-  delivery: undefined,
+  pickupCustomer: undefined,
+  deliveryCustomer: undefined,
   courier: undefined,
-  blocks: undefined,
-  price: undefined,
+  blocks: 0,
+  price: 1.5,
 })
 
 onMounted(async () => {
-  await getCustomers();
+  await getDeliveryCustomers();
+  await getPickupCustomers();
   await getCouriers();
   await getOrders();
   await getClerks();
 });
 
 // Get Methods
-async function getCustomers() {
+async function getDeliveryCustomers() {
     try {
-    const response = await CustomerServices.getCustomers();
-    customers.value = response.data;
+    const response = await DeliveryCustomerServices.getDeliveryCustomers();
+    deliveryCustomers.value = response.data;
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+async function getPickupCustomers() {
+    try {
+    const response = await PickupCustomerServices.getPickupCustomers();
+    pickupCustomers.value = response.data;
   } catch (error) {
     console.log(error);
   }
@@ -313,7 +325,7 @@ async function deleteClerk(id) {
   }
 }
 
-  async function addCustomer() {
+  async function addCustomer() { // update this
   isAddCustomer.value = false;
   delete newCustomer.value.id;
   try {
@@ -488,8 +500,8 @@ async function addOrder() {
 function openAddOrder() {
   newOrder.value.date = undefined;
   newOrder.value.time = undefined;
-  newOrder.value.pickup = undefined;
-  newOrder.value.delivery = undefined;
+  newOrder.value.pickupCustomer = undefined;
+  newOrder.value.deliveryCustomer = undefined;
   newOrder.value.courier = undefined;
   newOrder.value.price = undefined;
   isAddOrder.value = true;
@@ -685,7 +697,7 @@ async function deleteOrder(id) {
     <v-card-title>Delete Customer</v-card-title>
     <v-card-text>
       <v-list>
-        <v-list-item v-for="customer in customers" :key="customer.id" class="customer-item">
+        <v-list-item v-for="customer in pickupCustomers" :key="customer.id" class="customer-item">
           <v-checkbox v-model="customer.selected"></v-checkbox>
           <v-list-item>
             <v-list-item-title class="customer-name">{{ customer.name }}</v-list-item-title>
@@ -720,10 +732,10 @@ async function deleteOrder(id) {
           <v-form @submit.prevent="addOrder">
             <v-text-field label="Date" type="date" v-model="newOrder.date" required />
             <v-text-field label="Time" type="time" v-model="newOrder.time" required />
-            <v-select label="Pickup Customer" v-model="newOrder.pickup"
-              :items="customers" item-title="name" return-object required />
-            <v-select label="Delivery Customer" v-model="newOrder.delivery" 
-              :items="customers" item-title="name" return-objectrequired />
+            <v-select label="Pickup Customer" v-model="newOrder.pickupCustomer"
+              :items="pickupCustomers" item-title="name" return-object required />
+            <v-select label="Delivery Customer" v-model="newOrder.deliveryCustomer" 
+              :items="deliveryCustomers" item-title="name" return-objectrequired />
             <v-select label="Courier" v-model="newOrder.courier" 
               :items="couriers" item-title="name" return-object  required />
             <v-spacer></v-spacer>
@@ -848,7 +860,7 @@ async function deleteOrder(id) {
 <v-row>
   <v-col cols="6">
     <v-list>
-      <v-list-item v-for="(customer, index) in customers.slice(0, 5)" :key="customer.id" class="customer-item">
+      <v-list-item v-for="(customer, index) in pickupCustomers.slice(0, 5)" :key="customer.id" class="customer-item">
         <v-list-item-title class="customer-name">{{ customer.name }}</v-list-item-title>
         <v-row class="customer-row">
           <v-col cols="6" class="py-0">
@@ -885,7 +897,7 @@ async function deleteOrder(id) {
 
   <v-col cols="6">
     <v-list>
-      <v-list-item v-for="(customer, index) in customers.slice(5)" :key="customer.id" class="customer-item">
+      <v-list-item v-for="(customer, index) in pickupCustomers.slice(5)" :key="customer.id" class="customer-item">
         <v-list-item-title class="customer-name">{{ customer.name }}</v-list-item-title>
         <v-row class="customer-row">
           <v-col cols="6" class="py-0">
