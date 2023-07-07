@@ -7,6 +7,7 @@ import OrderServices from "../services/OrderServices.js"
 import ClerkServices from "../services/ClerkServices.js";
 
 
+
 const route = useRoute();
 const snackbar = ref({
   value: false,
@@ -459,6 +460,8 @@ snackbar.value = {
   text: `${newCourier.value.name} added successfully!`
 };
 
+
+
 </script>
 
 
@@ -515,9 +518,9 @@ snackbar.value = {
       <v-list>
         <v-list-item v-for="customer in customers" :key="customer.id" class="customer-item">
           <v-checkbox v-model="customer.selected"></v-checkbox>
-          <v-list-item-content>
+          <v-list-item>
             <v-list-item-title class="customer-name">{{ customer.name }}</v-list-item-title>
-          </v-list-item-content>
+          </v-list-item>
         </v-list-item>
       </v-list>
       <v-spacer></v-spacer>
