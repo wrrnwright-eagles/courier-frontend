@@ -4,7 +4,28 @@ import { useRoute } from "vue-router";
 import PathServices from "../services/PathServices.js";
 import OrderServices from "../services/OrderServices.js";
 
+onMounted(async () => {
+  await getOrders();
+});
 
+
+async function getOrders() {
+  try {
+    const response = await OrderServices.getOrder(route.params.id);
+    console.log(response.data);
+    orders.value = response.data[0];
+  } catch (error) {
+    console.log(error);
+  }
+
+}
+
+/* 
+function shortestPath(paths, order.pickup.locationNode, order.delivery.locationNode) {
+  
+}
+
+*/
 
 </script>
 
