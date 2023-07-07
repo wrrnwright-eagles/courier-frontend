@@ -770,6 +770,83 @@ snackbar.value = {
       </v-col>
     </v-row>
   </v-container>
+
+                  <!-- Dialog window for open and edit Order-->
+                  <v-dialog persistent :model-value="isAddOrder || isEditOrder" width="800">
+        <v-card class="rounded-lg elevation-5">
+          <v-card-item>
+            <v-card-title class="headline mb-2"
+              >{{ isAddOrder ? "Add Order" : isEditOrder ? "Edit Order" : "" }}
+            </v-card-title>
+          </v-card-item>
+          <v-card-text> <!-- fix this -->
+            <v-select
+              v-model="newOrder.customerPickup"
+              :items="customers"
+              item-title="customer.name"
+              label="Customer Pickup"
+              return-object
+              chips
+            ></v-select>
+            <v-select
+              v-model="newOrder.customerDelivery"
+              :items="customers"
+              item-title="customer.name"
+              label="Customer Delivery"
+              return-object
+              chips
+            ></v-select>
+            <v-select
+              v-model="newOrder.courier"
+              :items="couriers"
+              item-title="courier.name"
+              label="Courier"
+              return-object
+              chips
+            ></v-select>
+            <v-text-field
+              v-model="newOrder.date"
+              :item="date"
+              label="Order Date"
+              type="date"
+              required
+            ></v-text-field>
+            <v-text-field
+              v-model="newOrder.time"
+              :items="time"
+              label="Time"
+              type="time"
+              required
+            ></v-text-field>
+            <v-text-field
+              v-model="newOrder.price"
+              :items="price"
+              label="Price"
+              required
+            ></v-text-field>
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn
+              variant="flat"
+              color="secondary"
+              @click="isAddOrder ? closeAddOrder() : isEditOrder ? closeEditOrder() : false"
+              >Close</v-btn
+            >
+            <v-btn
+              variant="flat"
+              color="primary"
+              @click="
+                isAddOrder ? addOrder() : isEditOrder ? updateOrder() : false
+              "
+              >{{
+                isAddOrder ? "Add Order" : isEditOrder ? "Update Order" : ""
+              }}</v-btn
+            >
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+
 </template>
 
 <style scoped>
