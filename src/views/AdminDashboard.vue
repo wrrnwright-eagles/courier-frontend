@@ -549,12 +549,14 @@ snackbar.value = {
         <v-card-title>Add Order</v-card-title>
         <v-card-text>
           <v-form @submit.prevent="addOrder">
-            <v-text-field label="Date" v-model="newOrder.date" required />
-            <v-text-field label="Time" v-model="newOrder.time" required />
-            <v-text-field label="Pickup" v-model="newOrder.pickup" required />
-            <v-text-field label="Delivery" v-model="newOrder.delivery" required />
-            <v-text-field label="Courier" v-model="newOrder.courier" required />
-            <v-text-field label="Customer" v-model="newOrder.customer" required />
+            <v-text-field label="Date" type="date" v-model="newOrder.date" required />
+            <v-text-field label="Time" type="time" v-model="newOrder.time" required />
+            <v-select label="Pickup Customer" v-model="newOrder.pickup"
+              :items="customers" item-title="name" return-object required />
+            <v-select label="Delivery Customer" v-model="newOrder.delivery" 
+              :items="customers" item-title="name" return-objectrequired />
+            <v-select label="Courier" v-model="newOrder.courier" 
+              :items="couriers" item-title="name" return-object  required />
             <v-spacer></v-spacer>
             <v-btn color="green darken-1" text @click="closeAddOrder">Cancel</v-btn>
             <v-btn color="green darken-1" text @click="addOrder">Add Order</v-btn>
