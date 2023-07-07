@@ -5,6 +5,8 @@ import CourierServices from "../services/CourierServices.js";
 import CustomerServices from "../services/CustomerServices.js";
 import OrderServices from "../services/OrderServices.js"
 import ClerkServices from "../services/ClerkServices.js";
+import courierImage from '../courier.png';
+
 
 
 
@@ -15,7 +17,11 @@ const snackbar = ref({
   text: ''
 });
 const couriers = ref([]);
-const selectedCourier = ref({});
+const selectedCourier = ref({
+  id: null,
+  courierNumber: "",
+  name: "",
+});
 const isAddCourier = ref(false);
 const isEditCourier = ref(false);
 const isDeleteCustomer = ref(false);
@@ -30,9 +36,13 @@ const isAddOrder = ref(false);
 const isEditOrder = ref(false);
 
 const clerks = ref([]);
-const selectedClerk = ref({});
 const isAddClerk = ref(false);
 const isEditClerk = ref(false);
+const selectedClerk = ref({
+  id: null,
+  clerkNumber: "",
+  name: "",
+});
 const isClerk = ref(false);
 
 const isAdmin = ref(false);
@@ -145,10 +155,10 @@ function closeAddCourier() {
   isAddCourier.value = false;
 }
 
-function openEditCourier(courier) { // still need to figure out how to get a selected Courier from the list
-  newCourier.value.id = courier.id;
-  newCourier.value.courierNumber = courier.courierNumber;
-  newCourier.value.name = courier.name;
+function openEditCourier(courier) {
+  selectedCourier.value.id = courier.id;
+  selectedCourier.value.courierNumber = courier.courierNumber;
+  selectedCourier.value.name = courier.name;
   isEditCourier.value = true;
 }
 
@@ -156,17 +166,35 @@ function closeEditCourier() {
   isEditCourier.value = false;
 }
 
-async function updateCourier(courier) {
+async function updateCourier() {
   try {
-    const response = await CourierServices.updateCourier(courier.id, courier);
-    const index = response.value.findIndex(c => c.id === courier.id);
-    if (index !== -1) {
-      response.value[index] = courier;
+    const response = await CourierServices.updateCourier(selectedCourier.value);
+    console.log(response); 
+    if (response.data && Array.isArray(response.data)) {
+      const updatedCourierIndex = response.data.findIndex(
+        (c) => c.id === selectedCourier.value.id
+      );
+      if (updatedCourierIndex !== -1) {
+        response.data[updatedCourierIndex] = selectedCourier.value;
+      }
     }
+    isEditCourier.value = false;
+    snackbar.value = {
+      value: true,
+      color: "green",
+      text: "Courier updated successfully!"
+    };
+    getCouriers(); 
   } catch (error) {
     console.log(error);
+    snackbar.value = {
+      value: true,
+      color: "error",
+      text: "Failed to update courier!"
+    };
   }
 }
+
 
 async function deleteCourier(id) {
   const confirmDialog = confirm("Are you sure you want to delete this courier?");
@@ -223,10 +251,10 @@ function closeAddClerk() {
   isAddClerk.value = false;
 }
 
-function openEditClerk(item) {
-  newClerk.value.id = item.id;
-  newClerk.value.clerkNumber = item.clerkNumber;
-  newClerk.value.name = item.name;
+function openEditClerk(clerk) {
+  selectedClerk.value.id = clerk.id;
+  selectedClerk.value.clerkNumber = clerk.clerkNumber;
+  selectedClerk.value.name = clerk.name;
   isEditClerk.value = true;
 }
 
@@ -236,13 +264,30 @@ function closeEditClerk() {
 
 async function updateClerk(clerk) {
   try {
-    const response = await ClerkServices.updateClerk(clerk.id, clerk);
-    const index = response.value.findIndex(c => c.id === clerk.id);
-    if (index !== -1) {
-      response.value[index] = clerk;
+    const response = await ClerkServices.updateClerk(selectedClerk.value);
+    console.log(response);
+    if (response.data && Array.isArray(response.data)) {
+      const updatedClerkIndex = response.data.findIndex(
+        (c) => c.id === selectedClerk.value.id
+      );
+      if (updatedClerkIndex !== -1) {
+        response.data[updatedClerkIndex] = selectedClerk.value;
+      }
     }
+    isEditClerk.value = false;
+    snackbar.value = {
+      value: true,
+      color: "green",
+      text: "Clerk updated successfully!"
+    };
+    getClerks(); 
   } catch (error) {
     console.log(error);
+    snackbar.value = {
+      value: true,
+      color: "error",
+      text: "Failed to update clerk!"
+    };
   }
 }
 
@@ -254,7 +299,7 @@ async function deleteClerk(id) {
       clerks.value = clerks.value.filter(c => c.id !== id);
       snackbar.value = {
         value: true,
-        color: 'success',
+        color: 'green',
         text: 'Clerk was successfully deleted!'
       };
     } catch (error) {
@@ -290,7 +335,6 @@ async function deleteClerk(id) {
 }
 
 function openAddCustomer() {
-  console.log("openAddCustomer is called");
   newCustomer.value.customerNumber = undefined;
   newCustomer.value.name = undefined;
   newCustomer.value.locationDescription = undefined;
@@ -299,26 +343,32 @@ function openAddCustomer() {
   isAddCustomer.value = true;
 }
 
-
-
 function closeAddCustomer() {
   isAddCustomer.value = false;
 }
 
-function openEditCustomer(item) {
-  newCustomer.value.id = item.id;
-  newCustomer.value.customerNumber = item.customerNumber;
-  newCustomer.value.name = item.name;
-  newCustomer.value.location = item.location;
-  newCustomer.value.deliveryInstructions = item.deliveryInstructions;
-  isEditCustomer.value = true;
+function openEditCustomer(customer) {
+  if (customer && customer.id) {
+    selectedCustomer.value.id = customer.id;
+    selectedCustomer.value.customerNumber = customer.customerNumber;
+    selectedCustomer.value.name = customer.name;
+    selectedCustomer.value.locationDescription = customer.locationDescription;
+    selectedCustomer.value.locationNode = customer.locationNode;
+    selectedCustomer.value.deliveryInstructions = customer.deliveryInstructions;
+    isEditCustomer.value = true;
+  } else {
+    console.error('Invalid customer:', customer);
+  }
 }
+
+
 
 function closeEditCustomer() {
   isEditCustomer.value = false;
 }
 
 function openDeleteCustomerDialog() {
+  isEditCustomer.value = true;
   isDeleteCustomer.value = true;
 }
 
@@ -327,16 +377,48 @@ function closeDeleteCustomerDialog() {
 }
 
 async function updateCustomer(customer) {
-  try {
-    const response = await CustomerServices.updateCustomer(customer.id, customer);
-    const index = response.value.findIndex(c => c.id === customer.id);
-    if (index !== -1) {
-      response.value[index] = customer;
+try {
+    const response = await CustomerServices.updateCustomer(customer);
+    if (response.data && response.data.message === 'Customer was updated successfully.') {
+      snackbar.value = {
+        value: true,
+        color: "green",
+        text: "Customer updated successfully!",
+      };
+      getCustomers();
+    } else {
+      console.error("Invalid response data:", response.data);
+      snackbar.value = {
+        value: true,
+        color: "error",
+        text: "Failed to update customer!",
+      };
     }
   } catch (error) {
     console.log(error);
+    snackbar.value = {
+      value: true,
+      color: "error",
+      text: "Failed to update customer!",
+    };
   }
 }
+
+
+async function saveCustomer() {
+  try {
+    await updateCustomer(selectedCustomer.value);
+    closeEditCustomer(); 
+  } catch (error) {
+    console.log(error);
+    snackbar.value = {
+      value: true,
+      color: "error",
+      text: "Failed to update customer!",
+    };
+  }
+}
+
 
 async function deleteCustomer(id) {
   try {
@@ -404,7 +486,6 @@ async function addOrder() {
 }
 
 function openAddOrder() {
-  console.log("openAddOrder is called");
   newOrder.value.date = undefined;
   newOrder.value.time = undefined;
   newOrder.value.pickup = undefined;
@@ -435,30 +516,48 @@ function closeEditOrder() {
 
 async function updateOrder(order) {
   try {
-    const response = await OrderServices.updateOrder(order.id, order);
-    const index = response.value.findIndex(o => o.id === order.id);
+    const response = await OrderServices.updateOrder(order);
+    const index = response.data.findIndex((o) => o.id === order.id);
     if (index !== -1) {
-      response.value[index] = order;
+      response.data[index] = order;
     }
+    snackbar.value = {
+      value: true,
+      color: "success",
+      text: "Order updated successfully!"
+    };
+    getOrders(); 
   } catch (error) {
     console.log(error);
+    snackbar.value = {
+      value: true,
+      color: "error",
+      text: "Failed to update order!"
+    };
   }
 }
-
 async function deleteOrder(id) {
-  try {
-    await OrderServices.deleteOrder(id);
-    orders.value = orders.value.filter(o => o.id !== id);
-  } catch (error) {
-    console.log(error);
+  const confirmDialog = confirm("Are you sure you want to delete this order?");
+  if (confirmDialog) {
+    try {
+      await OrderServices.deleteOrder(id);
+      orders.value = orders.value.filter(o => o.id !== id);
+      snackbar.value = {
+        value: true,
+        color: 'green',
+        text: 'Order deleted successfully!'
+      };
+    } catch (error) {
+      console.log(error);
+      snackbar.value = {
+        value: true,
+        color: 'error',
+        text: 'Failed to delete order!'
+      };
+    }
   }
 }
 
-snackbar.value = {
-  value: true,
-  color: "green",
-  text: `${newCourier.value.name} added successfully!`
-};
 
 
 
@@ -466,7 +565,77 @@ snackbar.value = {
 
 
   <template>
-    <v-dialog v-model="isAddClerk">
+  <v-container>
+    <v-row align="center">
+      <div class="shadow-container">
+      <div class="image-container">
+        <img :src="courierImage" alt="courier image">
+      </div>
+    </div>
+      <v-col cols="12">
+        <v-card-title class="pl-0 text-h4 font-weight-bold">
+          Dashboard
+        </v-card-title>
+      </v-col>
+    </v-row>
+    <v-row>
+      <v-col cols="14">
+        <div class="order-container rounded" style="background-color: darkgreen;">
+          <h2 style="color: white;">Orders</h2>
+          <div class="icon">
+            <v-icon size="x-small" @click="openAddOrder()">
+              mdi-plus
+            </v-icon>
+          </div>
+        </div>
+        <v-list>
+  <v-list-item v-for="order in orders" :key="order.id">
+    <v-list-item-title>{{ order.date }} {{ order.pickup }}</v-list-item-title>
+    <v-list-item-action>
+      <v-icon size="x-small" @click="openEditOrder(order)">
+        mdi-pencil
+      </v-icon>
+      <v-icon size="x-small" @click="deleteOrder(order.id)">
+  mdi-trash-can
+</v-icon>
+    </v-list-item-action>
+  </v-list-item>
+</v-list>
+      </v-col>
+    </v-row>
+    <v-row>
+      <v-col cols="4">
+        <div class="courier-container" style="background-color: darkgreen; border-radius: 15px; margin-bottom: 18px;">
+          <h2 style="text-align: center; color: white;">Couriers</h2>
+          <div class="icon">
+            <v-icon size="x-small" @click="openAddCourier()">
+              mdi-plus
+            </v-icon>
+          </div>
+        </div>
+        <v-list>
+  <v-list-item v-for="courier in couriers" :key="courier.id" class="courier-item">
+    <v-list-item-title class="courier-name">{{ courier.name }}</v-list-item-title>
+    <v-row class="courier-row text-right">
+      <v-col cols="6" class="courier-col">
+        <v-list-item-subtitle>Courier Number:</v-list-item-subtitle>
+      </v-col>
+      <v-col cols="1" class="courier-col">
+        <v-list-item-subtitle>{{ courier.courierNumber }}</v-list-item-subtitle>
+      </v-col>
+    </v-row>
+
+    <v-list-item-action>
+      <v-icon size="x-small" @click="openEditCourier(courier)">
+        mdi-pencil
+      </v-icon>
+      <v-icon size="x-small" @click="deleteCourier(courier.id)">
+  mdi-trash-can
+</v-icon>
+    </v-list-item-action>
+  </v-list-item>
+</v-list>
+<v-dialog v-model="isAddClerk">
       <v-card>
         <v-card-title>Add Clerk</v-card-title>
         <v-card-text>
@@ -526,12 +695,9 @@ snackbar.value = {
       <v-spacer></v-spacer>
       <v-btn color="red darken-1" text @click="closeDeleteCustomerDialog">Cancel</v-btn>
 <v-btn color="red darken-1" text @click="deleteSelectedCustomers">Delete Customer</v-btn>
-
     </v-card-text>
   </v-card>
 </v-dialog>
-
-
 <v-dialog v-model="confirmDelete" max-width="290">
   <v-card>
     <v-card-title class="headline">Are you sure?</v-card-title>
@@ -568,98 +734,80 @@ snackbar.value = {
     <v-snackbar v-model="snackbar.value" :color="snackbar.color" :timeout="3000" rounded="pill">
   {{ snackbar.text }}
 </v-snackbar>
-  <v-container>
-    <v-row align="center">
-      <v-col cols="12">
-        <v-card-title class="pl-0 text-h4 font-weight-bold">
-          Dashboard
-        </v-card-title>
-      </v-col>
-    </v-row>
-    <v-row>
-      <v-col cols="11">
-        <div class="order-container rounded" style="background-color: darkgreen;">
-          <h2 style="color: white;">Orders</h2>
-          <div class="icon">
-            <v-icon size="x-small" @click="openAddOrder()">
-              mdi-plus
-            </v-icon>
-          </div>
-          <div class="icon">
-            <v-icon size="x-small" @click="openEditOrder(item)">
-              mdi-pencil
-            </v-icon>
-          </div>
-          <div class="icon">
-            <v-icon size="x-small" @click="deleteOrder(item)">
-              mdi-trash-can
-            </v-icon>
-          </div>
-        </div>
-        <v-list>
-  <v-list-item v-for="order in orders" :key="order.id">
-    <v-list-item-title>{{ order.date }} {{ order.pickup }}</v-list-item-title>
+  <!-- Edit Order Dialog -->
+  <v-dialog v-model="isEditOrder">
+  <v-card>
+    <v-card-title>Edit Order</v-card-title>
+    <v-card-text>
+      <v-form @submit.prevent="updateOrder">
+        <v-text-field label="Date" v-model="selectedOrder.date" required />
+        <v-text-field label="Time" v-model="selectedOrder.time" required />
+        <v-text-field label="Pickup" v-model="selectedOrder.pickup" required />
+        <v-text-field label="Delivery" v-model="selectedOrder.delivery" required />
+        <v-text-field label="Courier" v-model="selectedOrder.courier" required />
+        <v-text-field label="Price" v-model="selectedOrder.price" required />
+        <v-spacer></v-spacer>
+        <v-btn color="green darken-1" text @click="closeEditOrder">Cancel</v-btn>
+        <v-btn color="green darken-1" text @click="saveCustomer">Save</v-btn>
+      </v-form>
+    </v-card-text>
+  </v-card>
+</v-dialog>
 
-    <v-list-item-action>
-      <v-icon size="x-small" @click="openEditOrder(order)">
-        mdi-pencil
-      </v-icon>
-      <v-icon size="x-small" @click="deleteOrder(order)">
-        mdi-trash-can
-      </v-icon>
-    </v-list-item-action>
-  </v-list-item>
-</v-list>
-      </v-col>
-    </v-row>
-    <v-row>
-      <v-col cols="3">
-        <div class="courier-container" style="background-color: darkgreen; border-radius: 15px; margin-bottom: 18px;">
-          <h2 style="text-align: center; color: white;">Couriers</h2>
-          <div class="icon">
-            <v-icon size="x-small" @click="openAddCourier()">
-              mdi-plus
-            </v-icon>
-          </div>
-        </div>
-        <v-list>
-  <v-list-item v-for="courier in couriers" :key="courier.id" class="courier-item">
-    <v-list-item-title class="courier-name">{{ courier.name }}</v-list-item-title>
-    <v-row class="courier-row text-right">
-      <v-col cols="6" class="courier-col">
-        <v-list-item-subtitle>Courier Number:</v-list-item-subtitle>
-      </v-col>
-      <v-col cols="1" class="courier-col">
-        <v-list-item-subtitle>{{ courier.courierNumber }}</v-list-item-subtitle>
-      </v-col>
-    </v-row>
+  <!-- Edit Courier Dialog -->
+  <v-dialog v-model="isEditCourier">
+    <v-card>
+      <v-card-title>Edit Courier</v-card-title>
+      <v-card-text>
+        <v-form @submit.prevent="updateCourier">
+          <v-text-field label="Courier Number" v-model="selectedCourier.courierNumber" required />
+          <v-text-field label="Name" v-model="selectedCourier.name" required />
+          <v-spacer></v-spacer>
+          <v-btn color="green darken-1" text @click="closeEditCourier">Cancel</v-btn>
+          <v-btn color="green darken-1" text @click="updateCourier">Save</v-btn>
+        </v-form>
+      </v-card-text>
+    </v-card>
+  </v-dialog>
 
-    <v-list-item-action>
-      <v-icon size="x-small" @click="openEditCourier(courier)">
-        mdi-pencil
-      </v-icon>
-      <v-icon size="x-small" @click="deleteCourier(courier.id)">
-  mdi-trash-can
-</v-icon>
-    </v-list-item-action>
-  </v-list-item>
-</v-list>
-
+  <!-- Edit Clerk Dialog -->
+<v-dialog v-model="isEditClerk">
+  <v-card>
+    <v-card-title>Edit Clerk</v-card-title>
+    <v-card-text>
+      <v-form @submit.prevent="updateClerk">
+        <v-text-field label="Clerk Number" v-model="selectedClerk.clerkNumber" required />
+        <v-text-field label="Name" v-model="selectedClerk.name" required />
+        <v-spacer></v-spacer>
+        <v-btn color="green darken-1" text @click="closeEditClerk">Cancel</v-btn>
+        <v-btn color="green darken-1" text @click="updateClerk">Save</v-btn>
+      </v-form>
+    </v-card-text>
+  </v-card>
+</v-dialog>
+<!-- Edit Customer Dialog -->
+<v-dialog v-model="isEditCustomer">
+  <v-card>
+    <v-card-title>Edit Customer</v-card-title>
+    <v-card-text>
+      <v-form>
+        <v-text-field label="Customer Number" v-model="selectedCustomer.customerNumber" required />
+        <v-text-field label="Name" v-model="selectedCustomer.name" required />
+        <v-text-field label="Location Description" v-model="selectedCustomer.locationDescription" required />
+        <v-text-field label="Location Node" v-model="selectedCustomer.locationNode" required />
+        <v-text-field label="Delivery Instructions" v-model="selectedCustomer.deliveryInstructions" required />
+        <v-spacer></v-spacer>
+        <v-btn color="green darken-1" text @click="closeEditCustomer">Cancel</v-btn>
+        <v-btn color="green darken-1" text @click="saveCustomer">Save</v-btn>
+      </v-form>
+    </v-card-text>
+  </v-card>
+</v-dialog>
         <div class="clerk-container" style="background-color: darkgreen; border-radius: 15px; margin-bottom: 18px;">
           <h2 style="text-align: center; color: white;">Clerks</h2>
           <div class="icon">
             <v-icon size="x-small" @click="openAddClerk()">
               mdi-plus
-            </v-icon>
-          </div>
-          <div class="icon">
-            <v-icon size="x-small" @click="openEditClerk(item)">
-              mdi-pencil
-            </v-icon>
-          </div>
-          <div class="icon">
-            <v-icon size="x-small" @click="deleteClerk(item)">
-              mdi-trash-can
             </v-icon>
           </div>
         </div>
@@ -694,82 +842,86 @@ snackbar.value = {
       mdi-plus
     </v-icon>
   </div>
-  <div class="icon">
-    <v-icon size="x-small" @click="openEditCustomer(item)">
-      mdi-pencil
-    </v-icon>
-  </div>
-  <div class="icon">
-    <v-icon size="x-small" @click="openDeleteCustomerDialog()">
-      mdi-trash-can
-    </v-icon>
-  </div>
 </div>
-
-        <v-row>
-          <v-col cols="6">
-            <v-list>
-              <v-list-item v-for="(customer, index) in customers.slice(0, 5)" :key="customer.id" class="customer-item">
-                <v-list-item-title class="customer-name">{{ customer.name }}</v-list-item-title>
-                <v-row class="customer-row">
-                  <v-col cols="6" class="py-0">
-                    <v-list-item-subtitle>Customer:</v-list-item-subtitle>
-                  </v-col>
-                  <v-col cols="6" class="py-0">
-                    <v-list-item-subtitle>{{ customer.customerNumber }}</v-list-item-subtitle>
-                  </v-col>
-                </v-row>
-                <v-row class="customer-row">
-                  <v-col cols="6" class="py-0">
-                    <v-list-item-subtitle>Location:</v-list-item-subtitle>
-                  </v-col>
-                  <v-col cols="6" class="py-0">
-                    <v-list-item-subtitle>{{ customer.locationDescription }}</v-list-item-subtitle>
-                  </v-col>
-                </v-row>
-                <v-row class="customer-row">
-                  <v-col cols="6" class="py-0">
-                    <v-list-item-subtitle>Delivery:</v-list-item-subtitle>
-                  </v-col>
-                  <v-col cols="6" class="py-0">
-                    <v-list-item-subtitle>{{ customer.deliveryInstructions }}</v-list-item-subtitle>
-                  </v-col>
-                </v-row>
-              </v-list-item>
-            </v-list>
-          </v-col>
-          <v-col cols="6">
-            <v-list>
-              <v-list-item v-for="(customer, index) in customers.slice(5)" :key="customer.id" class="customer-item">
-                <v-list-item-title class="customer-name">{{ customer.name }}</v-list-item-title>
-                <v-row class="customer-row">
-                  <v-col cols="6" class="py-0">
-                    <v-list-item-subtitle>Customer:</v-list-item-subtitle>
-                  </v-col>
-                  <v-col cols="6" class="py-0">
-                    <v-list-item-subtitle>{{ customer.customerNumber }}</v-list-item-subtitle>
-                  </v-col>
-                </v-row>
-                <v-row class="customer-row">
-                  <v-col cols="6" class="py-0">
-                    <v-list-item-subtitle>Location:</v-list-item-subtitle>
-                  </v-col>
-                  <v-col cols="6" class="py-0">
-                    <v-list-item-subtitle>{{ customer.locationDescription }}</v-list-item-subtitle>
-                  </v-col>
-                </v-row>
-                <v-row class="customer-row">
-                  <v-col cols="6" class="py-0">
-                    <v-list-item-subtitle>Delivery:</v-list-item-subtitle>
-                  </v-col>
-                  <v-col cols="6" class="py-0">
-                    <v-list-item-subtitle>{{ customer.deliveryInstructions }}</v-list-item-subtitle>
-                  </v-col>
-                </v-row>
-              </v-list-item>
-            </v-list>
+<v-row>
+  <v-col cols="6">
+    <v-list>
+      <v-list-item v-for="(customer, index) in customers.slice(0, 5)" :key="customer.id" class="customer-item">
+        <v-list-item-title class="customer-name">{{ customer.name }}</v-list-item-title>
+        <v-row class="customer-row">
+          <v-col cols="6" class="py-0">
+            <v-list-item-subtitle>{{ customer.customerNumber }}</v-list-item-subtitle>
           </v-col>
         </v-row>
+        <v-row class="customer-row">
+          <v-col cols="6" class="py-0">
+            <v-list-item-subtitle>Location:</v-list-item-subtitle>
+          </v-col>
+          <v-col cols="6" class="py-0">
+            <v-list-item-subtitle>{{ customer.locationDescription }}</v-list-item-subtitle>
+          </v-col>
+        </v-row>
+        <v-row class="customer-row">
+          <v-col cols="6" class="py-0">
+            <v-list-item-subtitle>Delivery:</v-list-item-subtitle>
+          </v-col>
+          <v-col cols="6" class="py-0">
+            <v-list-item-subtitle>{{ customer.deliveryInstructions }}</v-list-item-subtitle>
+          </v-col>
+        </v-row>
+        <v-list-item-action>
+          <v-icon size="x-small" @click="openEditCustomer(customer)">
+  mdi-pencil
+</v-icon>
+          <v-icon size="x-small" @click="deleteCustomer(customer)">
+            mdi-trash-can
+          </v-icon>
+        </v-list-item-action>
+      </v-list-item>
+    </v-list>
+  </v-col>
+
+  <v-col cols="6">
+    <v-list>
+      <v-list-item v-for="(customer, index) in customers.slice(5)" :key="customer.id" class="customer-item">
+        <v-list-item-title class="customer-name">{{ customer.name }}</v-list-item-title>
+        <v-row class="customer-row">
+          <v-col cols="6" class="py-0">
+            <v-list-item-subtitle>Customer:</v-list-item-subtitle>
+          </v-col>
+          <v-col cols="6" class="py-0">
+            <v-list-item-subtitle>{{ customer.customerNumber }}</v-list-item-subtitle>
+          </v-col>
+        </v-row>
+        <v-row class="customer-row">
+          <v-col cols="6" class="py-0">
+            <v-list-item-subtitle>Location:</v-list-item-subtitle>
+          </v-col>
+          <v-col cols="6" class="py-0">
+            <v-list-item-subtitle>{{ customer.locationDescription }}</v-list-item-subtitle>
+          </v-col>
+        </v-row>
+        <v-row class="customer-row">
+          <v-col cols="6" class="py-0">
+            <v-list-item-subtitle>Delivery:</v-list-item-subtitle>
+          </v-col>
+          <v-col cols="6" class="py-0">
+            <v-list-item-subtitle>{{ customer.deliveryInstructions }}</v-list-item-subtitle>
+          </v-col>
+        </v-row>
+        <v-list-item-action>
+          <v-icon size="x-small" @click="openEditCustomer(customer)">
+  mdi-pencil
+</v-icon>
+          <v-icon size="x-small" @click="deleteCustomer(customer)">
+            mdi-trash-can
+          </v-icon>
+        </v-list-item-action>
+      </v-list-item>
+    </v-list>
+  </v-col>
+</v-row>
+
       </v-col>
     </v-row>
   </v-container>
@@ -815,8 +967,7 @@ snackbar.value = {
 
 .order-container {
   padding: 10px;
-  border-radius: 18px;
-  border-radius: 18px;
+  border-radius: 30px;
 }
 
 .courier-container  {
@@ -833,14 +984,36 @@ snackbar.value = {
 .customer-container {
   padding: 10px;
   border-radius: 18px;
+  margin-bottom: 10px;
 }
 
-.courier-col,
 .clerk-col {
-  padding-right: 0; /* Remove margin-right */
+  padding-right: 0; 
 }
 
 .subtitle-no-margin {
-  margin-right: 0; /* Remove margin-right for subtitles */
+  margin-right: 0; 
+}
+.shadow-container {
+  display: flex;
+  justify-content: center;
+  margin: 20px auto; 
+  margin-bottom: 20px; 
+  box-shadow: 23px 30px 30px rgba(0, 0, 0, 0.4);
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.image-container {
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.image-container img {
+  width: 500px; 
+  height: 350px; 
+  object-fit: cover;
+  border-radius: 50%;
+  overflow: hidden;
 }
 </style>

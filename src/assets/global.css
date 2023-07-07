@@ -4,11 +4,11 @@ body {
     background: linear-gradient(to bottom, rgb(173, 230, 217) , rgb(56, 213, 106));
   }
   .v-application {
-    background-image: linear-gradient(to bottom, rgb(173, 230, 188), rgb(75, 201, 128)) !important;
+    background-image: linear-gradient(to bottom, rgb(101, 175, 120), rgb(65, 171, 109)) !important;
 }
   
 .v-toolbar {
-    background-color: rgb(1, 58, 11) !important;
+    background-color: rgb(7, 50, 15) !important;
 }
 
 .courier-container {
@@ -17,7 +17,7 @@ body {
 }
 
 .courier-container h2 {
-  margin-right: 10px; /* Add some spacing between the elements */
+  margin-right: 10px;
 }
 
 .customer-container {
@@ -26,7 +26,7 @@ body {
 }
 
 .customer-container h2 {
-  margin-right: 10px; /* Add some spacing between the elements */
+  margin-right: 10px; 
 }
 
 .clerk-container {
@@ -35,7 +35,7 @@ body {
 }
 
 .clerk-container h2 {
-  margin-right: 10px; /* Add some spacing between the elements */
+  margin-right: 10px; 
 }
 
 .order-container {
@@ -44,38 +44,36 @@ body {
 }
 
 .order-container h2 {
-  margin-right: 10px; /* Add some spacing between the elements */
+  margin-right: 10px; 
 }
 
 .icon {
   margin-right: 10px;
 }
 
-/* Map Vue Styling */
 .map-container {
   display: flex;
-  height: 100%; /* Set the container to fill the full height of the viewport */
+  height: 100%; 
 }
 
 .map-section {
-  flex: 2; /* Occupy half of the container's width */
-  background-color: #f1f1f1; /* Add a background color to the map section */
+  flex: 2; 
+  background-color: #f1f1f1; 
 }
 
 .map-image {
   padding: 10px;
   width: 100%;
   height: 100%;
-  object-fit: cover; /* Maintain aspect ratio and cover the entire map section */
+  object-fit: cover; 
 }
 
 .text-section {
-  flex: 1; /* Occupy half of the container's width */
-  padding: 20px; /* Add some padding to the text section */
+  flex: 1; 
+  padding: 20px; 
 }
 
 .text-container {
-  background-color: #fff; /* Add a background color to the text container */
-  height: 100%; /* Ensure the text container occupies the entire text section */
-  
+  background-color: #fff; 
+  height: 100%; 
 }
