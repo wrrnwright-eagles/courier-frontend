@@ -1,13 +1,15 @@
 <script setup>
 import { onMounted, ref } from "vue";
 import { useRoute } from "vue-router";
-import CustomerServices from "../services/CustomerServices.js";
+import DeliveryCustomerServices from "../services/DeliveryCustomerServices.js";
+import PickupCustomerServices from "../services/PickupCustomerServices.js";
 import OrderServices from "../services/OrderServices.js";
 import courierImage from '../courier.png';
 import CourierServices from "../services/CourierServices.js";
 
 const route = useRoute();
-const customers = ref([]);
+const deliveryCustomers = ref([]);
+const pickupCustomers = ref([]);
 const couriers = ref([]);
 const orders = ref([]);
 const isCourier = ref(false);
@@ -18,9 +20,9 @@ const newOrder = ref({
   id: undefined,
   date: undefined,
   time: undefined,
-  pickup: {},
-  delivery: {},
-  courier: {},
+  pickupCustomer: undefined,
+  deliveryCustomer: undefined,
+  courier: undefined,
   blocks: undefined,
   price: undefined,
 })
@@ -31,15 +33,25 @@ const snackbar = ref({
 });
 
 onMounted(async () => {
-  await getCustomers();
+  await getPickupCustomers();
+  await getDeliveryCustomers();
   await getCouriers();
   await getOrders();
 });
 
-async function getCustomers() {
+async function getPickupCustomers() {
     try {
-    const response = await CustomerServices.getCustomers();
-    customers.value = response.data;
+    const response = await PickupCustomerServices.getPickupCustomers();
+    pickupCustomers.value = response.data;
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+async function getDeliveryCustomers() {
+    try {
+    const response = await DeliveryCustomerServices.getDeliveryCustomers();
+    deliveryCustomers.value = response.data;
   } catch (error) {
     console.log(error);
   }
@@ -194,14 +206,12 @@ async function deleteOrder(id) {
       <v-form @submit.prevent="addOrder">
         <v-text-field label="Date" type="date" v-model="newOrder.date" required />
         <v-text-field label="Time" type="time" v-model="newOrder.time" required />
-        <v-select label="Pickup Customer" v-model="newOrder.pickup.id"
-  :items="customers" item-text="name" return-object required />
-
-<v-select label="Delivery Customer" v-model="newOrder.delivery.id" 
-  :items="customers" item-text="name" return-object required />
-
-<v-select label="Courier" v-model="newOrder.courier.id" 
-  :items="couriers" item-text="name" return-object required />
+        <v-select label="Pickup Customer" v-model="newOrder.pickupCustomer"
+          :items="pickupCustomers" item-title="name" return-object required />
+        <v-select label="Delivery Customer" v-model="newOrder.deliveryCustomer" 
+          :items="deliveryCustomers" item-title="name" return-object required />
+        <v-select label="Courier" v-model="newOrder.courier" 
+          :items="couriers" item-title="name" return-object required />
 >
         <v-spacer></v-spacer>
         <v-btn color="green darken-1" text @click="closeAddOrder">Cancel</v-btn>
