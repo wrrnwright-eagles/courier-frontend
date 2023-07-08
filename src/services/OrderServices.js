@@ -7,6 +7,9 @@ export default {
   getOrder(id) {
     return apiClient.get("/orders/" + id);
   },
+  getPickupCustomersFromOrders(id) {
+    return apiClient.get("/orders/" + id + "/ordersWithPickupCustomers");
+  },
   addOrder(order) {
     return apiClient.post("/orders", order);
   },

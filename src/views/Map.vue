@@ -4,6 +4,12 @@ import { useRoute } from "vue-router";
 import PathServices from "../services/PathServices.js";
 import OrderServices from "../services/OrderServices.js";
 
+const route = useRoute();
+
+const orders = ref([]);
+const selectedOrder = ref({});
+const orderPathSteps = ref([]);
+
 onMounted(async () => {
   await getOrders();
 });
@@ -11,9 +17,9 @@ onMounted(async () => {
 
 async function getOrders() {
   try {
-    const response = await OrderServices.getOrder(route.params.id);
+    const response = await OrderServices.getOrders(route.params.id);
     console.log(response.data);
-    orders.value = response.data[0];
+    orders.value = response.data;
   } catch (error) {
     console.log(error);
   }
@@ -28,6 +34,10 @@ async function getOrders() {
       <img src="/Map.png" alt="Map" class="map-image">
     </div>
     <div class="text-section">
+      <div class="order-selection">
+        <v-select label="Order" v-model="selectedOrder" :items="orders" 
+          item-title="id" return-value required/>
+      </div>
       <div class="text-container">
         <h2>Route Instructions</h2>
         <p>Step by Step Instructions</p>

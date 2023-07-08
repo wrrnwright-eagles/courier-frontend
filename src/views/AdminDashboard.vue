@@ -37,6 +37,8 @@ const selectedOrder = ref({});
 const isAddOrder = ref(false);
 const isEditOrder = ref(false);
 
+const orderPickupCustomers = ref([]);
+
 const clerks = ref([]);
 const isAddClerk = ref(false);
 const isEditClerk = ref(false);
@@ -45,9 +47,6 @@ const selectedClerk = ref({
   clerkNumber: "",
   name: "",
 });
-const isClerk = ref(false);
-
-const isAdmin = ref(false);
 
 const newCourier = ref({
   id: undefined,
@@ -86,6 +85,7 @@ onMounted(async () => {
   await getPickupCustomers();
   await getCouriers();
   await getOrders();
+  await getOrderPickupCustomers();
   await getClerks();
 });
 
@@ -133,6 +133,15 @@ async function getClerks() {
   } catch (error) {
     console.log(error);
   }
+}
+
+async function getOrderPickupCustomers() {
+    try {
+      const response = await OrderServices.getPickupCustomersFromOrders(route.params.id);
+      orderPickupCustomers.value = response.data;
+    } catch (error) {
+      console.log(error);
+    }
 }
 
 async function addCourier() {
