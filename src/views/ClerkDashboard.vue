@@ -204,14 +204,15 @@ async function deleteOrder(id) {
     <v-card-title>Add Order</v-card-title>
     <v-card-text>
       <v-form @submit.prevent="addOrder">
-        <v-text-field label="Date" type="date" v-model="newOrder.date" required />
-        <v-text-field label="Time" type="time" v-model="newOrder.time" required />
-        <v-select label="Pickup Customer" v-model="newOrder.pickupCustomer"
-          :items="pickupCustomers" item-title="name" return-object required />
-        <v-select label="Delivery Customer" v-model="newOrder.deliveryCustomer" 
-          :items="deliveryCustomers" item-title="name" return-object required />
-        <v-select label="Courier" v-model="newOrder.courier" 
-          :items="couriers" item-title="name" return-object required />
+        <v-text-field label="Pickup Date" type="date" v-model="newOrder.date" required />
+            <v-text-field label="Pickup Time" type="datetime-local" v-model="newOrder.time"
+               required />
+            <v-select label="Pickup Customer" v-model="newOrder.pickupCustomerId"
+              :items="pickupCustomers" item-title="name" item-value="id" return-value required />
+            <v-select label="Delivery Customer" v-model="newOrder.deliveryCustomerId" 
+              :items="deliveryCustomers" item-title="name" item-value="id" return-value required />
+            <v-select label="Courier" v-model="newOrder.courierId" 
+              :items="couriers" item-title="name" item-value="id" return-value  required />
 >
         <v-spacer></v-spacer>
         <v-btn color="green darken-1" text @click="closeAddOrder">Cancel</v-btn>

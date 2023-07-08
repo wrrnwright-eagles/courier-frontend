@@ -74,10 +74,10 @@ const newOrder = ref({
   id: undefined,
   date: undefined,
   time: undefined,
-  pickupCustomer: undefined,
-  deliveryCustomer: undefined,
-  courier: undefined,
-  blocks: 0,
+  pickupCustomerId: undefined,
+  deliveryCustomerId: undefined,
+  courierId: undefined,
+  blocks: 1,
   price: 1.5,
 })
 
@@ -479,6 +479,7 @@ async function deleteSelectedCustomers() {
 async function addOrder() {
   isAddOrder.value = false;
   delete newOrder.value.id;
+  console.log(newOrder.value)
   try {
     await OrderServices.addOrder(newOrder.value);
     snackbar.value = {
@@ -500,10 +501,11 @@ async function addOrder() {
 function openAddOrder() {
   newOrder.value.date = undefined;
   newOrder.value.time = undefined;
-  newOrder.value.pickupCustomer = undefined;
-  newOrder.value.deliveryCustomer = undefined;
-  newOrder.value.courier = undefined;
-  newOrder.value.price = undefined;
+  newOrder.value.pickupCustomerId = undefined;
+  newOrder.value.deliveryCustomerId = undefined;
+  newOrder.value.courierId = undefined;
+  newOrder.value.blocks = 1;
+  newOrder.value.price = 1.5;
   isAddOrder.value = true;
 }
 
@@ -730,14 +732,15 @@ async function deleteOrder(id) {
         <v-card-title>Add Order</v-card-title>
         <v-card-text>
           <v-form @submit.prevent="addOrder">
-            <v-text-field label="Date" type="date" v-model="newOrder.date" required />
-            <v-text-field label="Time" type="time" v-model="newOrder.time" required />
-            <v-select label="Pickup Customer" v-model="newOrder.pickupCustomer"
-              :items="pickupCustomers" item-title="name" return-object required />
-            <v-select label="Delivery Customer" v-model="newOrder.deliveryCustomer" 
-              :items="deliveryCustomers" item-title="name" return-objectrequired />
-            <v-select label="Courier" v-model="newOrder.courier" 
-              :items="couriers" item-title="name" return-object  required />
+            <v-text-field label="Pickup Date" type="date" v-model="newOrder.date" required />
+            <v-text-field label="Pickup Time" type="datetime-local" v-model="newOrder.time"
+               required />
+            <v-select label="Pickup Customer" v-model="newOrder.pickupCustomerId"
+              :items="pickupCustomers" item-title="name" item-value="id" return-value required />
+            <v-select label="Delivery Customer" v-model="newOrder.deliveryCustomerId" 
+              :items="deliveryCustomers" item-title="name" item-value="id" return-value required />
+            <v-select label="Courier" v-model="newOrder.courierId" 
+              :items="couriers" item-title="name" item-value="id" return-value  required />
             <v-spacer></v-spacer>
             <v-btn color="green darken-1" text @click="closeAddOrder">Cancel</v-btn>
             <v-btn color="green darken-1" text @click="addOrder">Add Order</v-btn>
@@ -864,6 +867,9 @@ async function deleteOrder(id) {
         <v-list-item-title class="customer-name">{{ customer.name }}</v-list-item-title>
         <v-row class="customer-row">
           <v-col cols="6" class="py-0">
+            <v-list-item-subtitle>Customer Number:</v-list-item-subtitle>
+          </v-col>
+          <v-col cols="6" class="py-0">
             <v-list-item-subtitle>{{ customer.customerNumber }}</v-list-item-subtitle>
           </v-col>
         </v-row>
@@ -901,7 +907,7 @@ async function deleteOrder(id) {
         <v-list-item-title class="customer-name">{{ customer.name }}</v-list-item-title>
         <v-row class="customer-row">
           <v-col cols="6" class="py-0">
-            <v-list-item-subtitle>Customer:</v-list-item-subtitle>
+            <v-list-item-subtitle>Customer Number:</v-list-item-subtitle>
           </v-col>
           <v-col cols="6" class="py-0">
             <v-list-item-subtitle>{{ customer.customerNumber }}</v-list-item-subtitle>
