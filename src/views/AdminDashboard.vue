@@ -6,6 +6,8 @@ import PickupCustomerServices from "../services/PickupCustomerServices.js";
 import DeliveryCustomerServices from "../services/DeliveryCustomerServices.js";
 import OrderServices from "../services/OrderServices.js"
 import ClerkServices from "../services/ClerkServices.js";
+import NodeServices from "../services/NodeServices.js";
+import EdgeServices from "../services/EdgeServices.js";
 import courierImage from '../courier.png';
 
 
@@ -37,7 +39,8 @@ const selectedOrder = ref({});
 const isAddOrder = ref(false);
 const isEditOrder = ref(false);
 
-const orderPickupCustomers = ref([]);
+const nodes = ref([]);
+const edges = ref([]);
 
 const clerks = ref([]);
 const isAddClerk = ref(false);
@@ -85,8 +88,9 @@ onMounted(async () => {
   await getPickupCustomers();
   await getCouriers();
   await getOrders();
-  await getOrderPickupCustomers();
   await getClerks();
+  await getNodes();
+  await getEdges();
 });
 
 // Get Methods
@@ -135,13 +139,22 @@ async function getClerks() {
   }
 }
 
-async function getOrderPickupCustomers() {
+async function getNodes() {
     try {
-      const response = await OrderServices.getPickupCustomersFromOrders(route.params.id);
-      orderPickupCustomers.value = response.data;
-    } catch (error) {
-      console.log(error);
-    }
+    const response = await NodeServices.getNodes();
+    nodes.value = response.data;
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+async function getEdges() {
+    try {
+    const response = await EdgeServices.getEdges();
+    edges.value = response.data;
+  } catch (error) {
+    console.log(error);
+  }
 }
 
 async function addCourier() {
@@ -338,13 +351,29 @@ async function deleteClerk(id) {
   isAddCustomer.value = false;
   delete newCustomer.value.id;
   try {
-    await CustomerServices.addCustomer(newCustomer.value);
+    await PickupCustomerServices.addPickupCustomer(newCustomer.value);
     snackbar.value = {
       value: true,
       color: 'black',
       text: 'Added Successfully!'
     };
-    getCustomers();
+    getPickupCustomers();
+  } catch (error) {
+    console.log(error);
+    snackbar.value = {
+      value: true,
+      color: 'red',
+      text: error.response.data.message
+    };
+  }
+  try {
+    await DeliveryCustomerServices.addDeliveryCustomer(newCustomer.value);
+    snackbar.value = {
+      value: true,
+      color: 'black',
+      text: 'Added Successfully!'
+    };
+    getDeliveryCustomers();
   } catch (error) {
     console.log(error);
     snackbar.value = {
@@ -488,7 +517,23 @@ async function deleteSelectedCustomers() {
 async function addOrder() {
   isAddOrder.value = false;
   delete newOrder.value.id;
-  console.log(newOrder.value)
+  console.log(newOrder.value);
+  let pickupLocation = "";
+  let deliveryLocation = "";
+  for (let i = 0; i < pickupCustomers.value.length; i++) {
+    for (let j=0; j < deliveryCustomers.value.length; j++) {
+      if(pickupCustomers.value[i].id === newOrder.value.pickupCustomerId) {
+        if(deliveryCustomers.value[j].id === newOrder.value.deliveryCustomerId) {
+          pickupLocation += pickupCustomers.value[i].locationNode;
+          deliveryLocation += deliveryCustomers.value[j].locationNode;
+        }
+      }
+    }
+  };
+
+
+  
+
   try {
     await OrderServices.addOrder(newOrder.value);
     snackbar.value = {
@@ -504,7 +549,7 @@ async function addOrder() {
       color: 'red',
       text: error.response.data.message
     };
-  }
+  };
 }
 
 function openAddOrder() {
