@@ -27,7 +27,6 @@ const selectedCourier = ref({
 });
 const isAddCourier = ref(false);
 const isEditCourier = ref(false);
-const isDeleteCustomer = ref(false);
 const deliveryCustomers = ref([]);
 const pickupCustomers = ref([]);
 const selectedCustomer = ref({});
@@ -347,7 +346,7 @@ async function deleteClerk(id) {
   }
 }
 
-  async function addCustomer() { // update this
+async function addCustomer() { // update this
   isAddCustomer.value = false;
   delete newCustomer.value.id;
   try {
@@ -417,15 +416,6 @@ function closeEditCustomer() {
   isEditCustomer.value = false;
 }
 
-function openDeleteCustomerDialog() {
-  isEditCustomer.value = true;
-  isDeleteCustomer.value = true;
-}
-
-function closeDeleteCustomerDialog() {
-  isDeleteCustomer.value = false;
-}
-
 async function updateCustomer(customer) {
 try {
     const response = await CustomerServices.updateCustomer(customer);
@@ -469,50 +459,40 @@ async function saveCustomer() {
   }
 }
 
-
-async function deleteCustomer(id) {
+async function deleteCustomer(customer) {
+  const confirmDialog = confirm("Are you sure you want to delete this order?");
+  if (confirmDialog) {
   try {
-    await CustomerServices.deleteCustomer(id);
-    customers.value = customers.value.filter(c => c.id !== id);
+    await PickupCustomerServices.deletePickupCustomer(customer.id);
+    await DeliveryCustomerServices.deleteDeliveryCustomer(customer.id);
+
+    if (Array.isArray(customer.value)) {
+      customer.value = customer.value.filter(o => o.id !== customer.id);
+    }
+    
     snackbar.value = {
       value: true,
       color: 'green',
-      text: 'Customer Deleted Successfully!'
+      text: 'Customer deleted successfully!'
     };
+    getDeliveryCustomers();
+    getPickupCustomers();
   } catch (error) {
-    console.log(error);
+    console.log('Error deleting customer: ', error);
+
     snackbar.value = {
       value: true,
       color: 'red',
-      text: error.response.data.message
+      text: 'Error deleting customer. Please try again.'
     };
   }
 }
-
-async function deleteSelectedCustomers() {
-  let selectedCustomers = customers.value.filter(c => c.selected);
-  for(let customer of selectedCustomers) {
-    try {
-      await CustomerServices.deleteCustomer(customer.id);
-    } catch (error) {
-      console.log(error);
-      snackbar.value = {
-        value: true,
-        color: 'red',
-        text: error.response.data.message
-      };
-      return;
-    }
-  }
-  getCustomers();
-  closeDeleteCustomerDialog();
-
-  snackbar.value = {
-    value: true,
-    color: 'green',
-    text: 'Customers Deleted Successfully!'
-  };
 }
+
+
+
+
+
 
 async function addOrder() {
   isAddOrder.value = false;
@@ -748,35 +728,17 @@ async function deleteOrder(id) {
         </v-card-text>
       </v-card>
     </v-dialog>
-    <v-dialog v-model="isDeleteCustomer" max-width="800px">
-  <v-card>
-    <v-card-title>Delete Customer</v-card-title>
-    <v-card-text>
-      <v-list>
-        <v-list-item v-for="customer in pickupCustomers" :key="customer.id" class="customer-item">
-          <v-checkbox v-model="customer.selected"></v-checkbox>
-          <v-list-item>
-            <v-list-item-title class="customer-name">{{ customer.name }}</v-list-item-title>
-          </v-list-item>
-        </v-list-item>
-      </v-list>
-      <v-spacer></v-spacer>
-      <v-btn color="red darken-1" text @click="closeDeleteCustomerDialog">Cancel</v-btn>
-<v-btn color="red darken-1" text @click="deleteSelectedCustomers">Delete Customer</v-btn>
-    </v-card-text>
-  </v-card>
-</v-dialog>
-<v-dialog v-model="confirmDelete" max-width="290">
+
+    <v-dialog v-model="confirmDelete" max-width="290">
   <v-card>
     <v-card-title class="headline">Are you sure?</v-card-title>
     <v-card-actions>
       <v-spacer></v-spacer>
       <v-btn color="green darken-1" text @click="confirmDelete = false">No</v-btn>
-      <v-btn color="red darken-1" text @click="deleteCustomer">Yes</v-btn>
+      <v-btn color="red darken-1" text @click="deleteCustomer({ ...selectedCustomer, type: 'pickup' })">Yes</v-btn>
     </v-card-actions>
   </v-card>
 </v-dialog>
-
 <v-snackbar v-model="snackbar.value" :color="snackbar.color" :timeout="3000" rounded="pill">
   {{ snackbar.text }}
 </v-snackbar>
@@ -813,13 +775,15 @@ async function deleteOrder(id) {
       <v-form @submit.prevent="updateOrder">
         <v-text-field label="Date" v-model="selectedOrder.date" required />
         <v-text-field label="Time" v-model="selectedOrder.time" required />
-        <v-text-field label="Pickup" v-model="selectedOrder.pickup" required />
-        <v-text-field label="Delivery" v-model="selectedOrder.delivery" required />
+        <v-select label="Pickup" v-model="selectedOrder.pickupCustomerId" 
+          :items="pickupCustomers" item-title="name" item-value="id" required />
+        <v-select label="Delivery" v-model="selectedOrder.deliveryCustomerId" 
+          :items="deliveryCustomers" item-title="name" item-value="id" required />
         <v-text-field label="Courier" v-model="selectedOrder.courier" required />
         <v-text-field label="Price" v-model="selectedOrder.price" required />
         <v-spacer></v-spacer>
-        <v-btn color="green darken-1" text @click="closeEditOrder">Cancel</v-btn>
-        <v-btn color="green darken-1" text @click="saveCustomer">Save</v-btn>
+        <v-btn color="green darken-1" text @click="isEditOrder = false">Cancel</v-btn>
+        <v-btn color="green darken-1" text @click="updateOrder">Save</v-btn>
       </v-form>
     </v-card-text>
   </v-card>
@@ -868,7 +832,7 @@ async function deleteOrder(id) {
         <v-text-field label="Location Node" v-model="selectedCustomer.locationNode" required />
         <v-text-field label="Delivery Instructions" v-model="selectedCustomer.deliveryInstructions" required />
         <v-spacer></v-spacer>
-        <v-btn color="green darken-1" text @click="closeEditCustomer">Cancel</v-btn>
+        <v-btn color="green darken-1" text @click="isEditCustomer = false">Cancel</v-btn>
         <v-btn color="green darken-1" text @click="saveCustomer">Save</v-btn>
       </v-form>
     </v-card-text>
@@ -904,6 +868,7 @@ async function deleteOrder(id) {
     </v-list-item-action>
   </v-list-item>
 </v-list>
+
 </v-col>
       <v-col cols="8">
         <div class="customer-container" style="background-color: darkgreen; border-radius: 15px;">
@@ -914,6 +879,8 @@ async function deleteOrder(id) {
     </v-icon>
   </div>
 </div>
+
+
 <v-row>
   <v-col cols="6">
     <v-list>
@@ -947,9 +914,11 @@ async function deleteOrder(id) {
           <v-icon size="x-small" @click="openEditCustomer(customer)">
   mdi-pencil
 </v-icon>
-          <v-icon size="x-small" @click="deleteCustomer(customer)">
-            mdi-trash-can
-          </v-icon>
+<v-icon size="x-small" @click="deleteCustomer(customer)">
+  mdi-trash-can
+</v-icon>
+
+
         </v-list-item-action>
       </v-list-item>
     </v-list>
