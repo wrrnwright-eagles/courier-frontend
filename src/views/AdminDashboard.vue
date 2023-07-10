@@ -78,8 +78,8 @@ const newOrder = ref({
   pickupCustomerId: undefined,
   deliveryCustomerId: undefined,
   courierId: undefined,
-  blocks: 1,
-  price: 1.5,
+  blocks: undefined,
+  price: undefined,
 })
 
 onMounted(async () => {
@@ -548,7 +548,11 @@ async function addOrder() {
   console.log('Shortest path:', path.join(' -> '));
   console.log('Visited nodes:', visitedNodes);
 
-  
+  newOrder.value.blocks = (visitedNodes.length - 1);
+  newOrder.value.price = ((1.5 * visitedNodes.length) + 5);
+
+  console.log("blocks = " + newOrder.value.blocks);
+  console.log("price = $" + newOrder.value.price);
 
   try {
     await OrderServices.addOrder(newOrder.value);
@@ -574,8 +578,8 @@ function openAddOrder() {
   newOrder.value.pickupCustomerId = undefined;
   newOrder.value.deliveryCustomerId = undefined;
   newOrder.value.courierId = undefined;
-  newOrder.value.blocks = 1;
-  newOrder.value.price = 1.5;
+  newOrder.value.blocks = undefined;
+  newOrder.value.price = undefined;
   isAddOrder.value = true;
 }
 
@@ -751,7 +755,7 @@ function dijkstra(graph, startNode, endNode) {
             <div class="mb-2">
               <v-chip small color="green">{{ order.blocks }} Blocks</v-chip>
               <v-chip small color="blue">{{ getCourierName(order.courierId) }}</v-chip>
-              <v-chip small color="red">Price: </v-chip>
+              <v-chip small color="red">Price: ${{ order.price }} </v-chip>
             </div>
             <div class="mb-1">{{ order.date }}, {{ order.time }}</div>
           </div>
