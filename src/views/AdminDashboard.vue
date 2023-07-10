@@ -522,6 +522,34 @@ async function addOrder() {
       }
     }
   };
+
+
+  const nodeTable = [];
+  const edgeTable = [];
+
+  for (let i = 0; i < nodes.value.length; i++) {
+    const node = nodes.value[i].node;
+    nodeTable.push(node);
+  }
+
+  for (let i = 0; i < edges.value.length; i++) {
+    const fromNode = edges.value[i].fromNode;
+    const toNode = edges.value[i].toNode;
+    const weight = edges.value[i].weight;
+    edgeTable.push({ fromNode, toNode, weight });
+  }
+
+  const graph = createGraph(nodeTable, edgeTable);
+
+  const { distances, previous, path, visitedNodes } = dijkstra(graph, pickupLocation, deliveryLocation);
+
+  console.log(distances);
+  console.log(previous);
+  console.log('Shortest path:', path.join(' -> '));
+  console.log('Visited nodes:', visitedNodes);
+
+  
+
   try {
     await OrderServices.addOrder(newOrder.value);
     snackbar.value = {
@@ -614,6 +642,74 @@ async function deleteOrder(id) {
   }
 }
 
+function createGraph(nodeTable, edgeTable) {
+  const graph = {};
+
+  // Add nodes to the graph
+  for (const node of nodeTable) {
+    graph[node] = {};
+  }
+
+  // Add edges to the graph with weights
+  for (const edge of edgeTable) {
+    const { fromNode, toNode, weight } = edge;
+    graph[fromNode][toNode] = weight;
+  }
+
+  return graph;
+}
+
+function dijkstra(graph, startNode, endNode) {
+  const distances = {};
+  const visited = {};
+  const previous = {};
+  const queue = [];
+
+  for (const node in graph) {
+    distances[node] = Infinity;
+  }
+  distances[startNode] = 0;
+
+  queue.push(startNode);
+
+  while (queue.length > 0) {
+    queue.sort((a,b) => distances[a] - distances[b]);
+    const current = queue.shift();
+    visited[current] = true;
+
+    if (current === endNode) {
+      break;
+    }
+
+    for (const neighbor in graph[current]) {
+      const distance = graph[current][neighbor];
+      const totalDistance = distances[current] + distance;
+
+      if (totalDistance < distances[neighbor]) {
+        distances[neighbor] = totalDistance;
+        previous[neighbor] = current;
+
+        if (!visited[neighbor]) {
+          queue.push(neighbor);
+        }
+      }
+    }
+  }
+
+  const path = [];
+  let current = endNode;
+  while (current) {
+    path.unshift(current);
+    current = previous[current];
+  }
+
+  const visitedNodes = [];
+  for (const node of path) {
+    visitedNodes.push({ node, distance: distances[node] });
+  }
+
+  return {distances, previous, path, visitedNodes};
+}
 
 
 
