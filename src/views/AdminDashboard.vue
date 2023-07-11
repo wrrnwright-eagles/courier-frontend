@@ -791,6 +791,7 @@ function dijkstra(graph, startNode, endNode) {
               <v-chip small color="green">{{ order.blocks }} Blocks</v-chip>
               <v-chip small color="blue">{{ getCourierName(order.courierId) }}</v-chip>
               <v-chip small color="red">Price: ${{ order.price }} </v-chip>
+              <v-chip small color="purple">Estimated Time: {{ order.blocks * 3 }} Minutes </v-chip>
             </div>
             <div class="mb-1">{{ order.date }}, {{ order.time }}</div>
           </div>
