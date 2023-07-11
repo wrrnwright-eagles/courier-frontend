@@ -8,6 +8,7 @@ import OrderServices from "../services/OrderServices.js"
 import ClerkServices from "../services/ClerkServices.js";
 import NodeServices from "../services/NodeServices.js";
 import EdgeServices from "../services/EdgeServices.js";
+import PathServices from "../services/PathServices.js";
 import courierImage from '../courier.png';
 
 
@@ -81,6 +82,12 @@ const newOrder = ref({
   courierId: undefined,
   blocks: undefined,
   price: undefined,
+})
+
+const newPath = ref({
+  id: undefined,
+  path: undefined,
+  orderId: undefined,
 })
 
 onMounted(async () => {
@@ -569,6 +576,16 @@ async function addOrder() {
   const previous = { ...previous1, ...previous2, ...previous3 };
   const path = [...path1, ...path2, ...path3];
   const visitedNodes = [...visitedNodes1, ...visitedNodes2, ...visitedNodes3];
+
+
+  try {
+    newPath.path = path.join(',');
+    newPath.orderId = newOrder.id;
+    await PathServices.addPath(newPath.value);
+    console.log(newPath.value);
+  } catch (error) {
+    console.log(error);
+  }
 
   console.log('Combined Results:');
   console.log('Distances:', distances);

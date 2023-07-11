@@ -1,17 +1,18 @@
 <script setup> 
 import { onMounted, ref } from "vue";
 import { useRoute } from "vue-router";
-//import PathServices from "../services/PathServices.js";
+import PathServices from "../services/PathServices.js";
 import OrderServices from "../services/OrderServices.js";
 
 const route = useRoute();
 
 const orders = ref([]);
 const selectedOrder = ref({});
-const orderPathSteps = ref([]);
+const pathSteps = ref([]);
 
 onMounted(async () => {
   await getOrders();
+  await getPaths();
 });
 
 
@@ -20,6 +21,17 @@ async function getOrders() {
     const response = await OrderServices.getOrders(route.params.id);
     console.log(response.data);
     orders.value = response.data;
+  } catch (error) {
+    console.log(error);
+  }
+
+}
+
+async function getPaths() {
+  try {
+    const response = await PathServices.getPaths(route.params.id);
+    console.log(response.data);
+    pathSteps.value = response.data;
   } catch (error) {
     console.log(error);
   }
