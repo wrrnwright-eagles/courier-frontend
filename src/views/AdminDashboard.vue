@@ -38,6 +38,7 @@ const selectedOrder = ref({});
 const isAddOrder = ref(false);
 const isEditOrder = ref(false);
 
+const officeNode = "C3";
 const nodes = ref([]);
 const edges = ref([]);
 
@@ -541,15 +542,47 @@ async function addOrder() {
 
   const graph = createGraph(nodeTable, edgeTable);
 
-  const { distances, previous, path, visitedNodes } = dijkstra(graph, pickupLocation, deliveryLocation);
+  //const { distances, previous, path, visitedNodes } = dijkstra(graph, pickupLocation, deliveryLocation);
 
+  const route1 = dijkstra(graph, officeNode, pickupLocation);
+  const route2 = dijkstra(graph, pickupLocation, deliveryLocation);
+  const route3 = dijkstra(graph, deliveryLocation, officeNode);
+
+  const distances1 = route1.distances;
+  const previous1 = route1.previous;
+  const path1 = route1.path;
+  const visitedNodes1 = route1.visitedNodes;
+
+  const distances2 = route2.distances;
+  const previous2 = route2.previous;
+  const path2 = route2.path;
+  const visitedNodes2 = route2.visitedNodes;
+
+  const distances3 = route3.distances;
+  const previous3 = route3.previous;
+  const path3 = route3.path;
+  const visitedNodes3 = route3.visitedNodes;
+  
+  const distances = { ...distances1, ...distances2, ...distances3 };
+  const previous = { ...previous1, ...previous2, ...previous3 };
+  const path = [...path1, ...path2, ...path3];
+  const visitedNodes = [...visitedNodes1, ...visitedNodes2, ...visitedNodes3];
+
+  console.log('Combined Results:');
+  console.log('Distances:', distances);
+  console.log('Previous Nodes:', previous);
+  console.log('Shortest Path:', path.join(' -> '));
+  console.log('Visited Nodes:', visitedNodes);
+
+  /*
   console.log(distances);
   console.log(previous);
   console.log('Shortest path:', path.join(' -> '));
   console.log('Visited nodes:', visitedNodes);
+  */
 
   newOrder.value.blocks = (visitedNodes.length - 1);
-  newOrder.value.price = ((1.5 * visitedNodes.length) + 5);
+  newOrder.value.price = ((1.5 * (visitedNodes.length - 1)) + 5);
 
   console.log("blocks = " + newOrder.value.blocks);
   console.log("price = $" + newOrder.value.price);
