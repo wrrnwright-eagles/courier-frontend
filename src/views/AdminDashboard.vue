@@ -9,8 +9,8 @@ import ClerkServices from "../services/ClerkServices.js";
 import NodeServices from "../services/NodeServices.js";
 import EdgeServices from "../services/EdgeServices.js";
 import courierImage from '../courier.png';
-
-
+import { saveAs } from 'file-saver';
+import { jsPDF } from "jspdf";
 
 
 const route = useRoute();
@@ -168,6 +168,36 @@ async function getEdges() {
     console.log(error);
   }
 }
+
+async function downloadLast30DaysOrders() {
+  try {
+    const response = await OrderServices.getRecentOrders();
+    const orders = response.data;
+    const doc = new jsPDF();
+    doc.text("Orders from last 30 days", 10, 10);
+    let y = 20;
+    for (const order of orders) {
+      // Format date in DD/MM/YYYY format
+      const date = new Date(order.date);
+      const formattedDate = `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
+      const customerName = await getCustomerName(order.deliveryCustomerId, 'delivery');
+
+      const line = `Order ID: ${order.id}, Date: ${formattedDate}, Price: $${order.price}, Customer: ${customerName}`;
+      doc.text(line, 10, y);
+
+      y += 10; 
+    }
+    doc.save("last-30-days-orders.pdf");
+  } catch (error) {
+    console.log(error);
+    snackbar.value = {
+      value: true,
+      color: "error",
+      text: "Failed to download orders!"
+    };
+  }
+}
+
 
 async function addCourier() {
   isAddCourier.value = false;
@@ -755,14 +785,14 @@ function dijkstra(graph, startNode, endNode) {
 </script>
 
 
-  <template>
+<template>
   <v-container>
     <v-row align="center">
       <div class="shadow-container">
-      <div class="image-container">
-        <img :src="courierImage" alt="courier image">
+        <div class="image-container">
+          <img :src="courierImage" alt="courier image">
+        </div>
       </div>
-    </div>
       <v-col cols="12">
         <v-card-title class="pl-0 text-h4 font-weight-bold">
           Dashboard
@@ -771,14 +801,24 @@ function dijkstra(graph, startNode, endNode) {
     </v-row>
     <v-row>
       <v-col cols="14">
-        <div class="order-container rounded" style="background-color: darkgreen;">
-          <h2 style="color: white;">Orders</h2>
-          <div class="icon">
-            <v-icon size="x-small" @click="openAddOrder()">
-              mdi-plus
-            </v-icon>
-          </div>
+        <div class="order-container rounded p-5" style="background-color: darkgreen;">
+          <v-row class="d-flex justify-space-between align-center" style="color: white;">
+            <div class="d-flex align-center">
+              <h2 class="mr-3">Orders</h2>
+              <v-icon size="x-small" @click="openAddOrder()">
+                mdi-plus
+              </v-icon>
+            </div>
+            <div class="bill-container rounded" style="background-color: rgb(49, 117, 80);">
+              <v-btn color="transparent" @click="downloadLast30DaysOrders()" style="color: white;">
+                <h2>Billing</h2>
+              </v-btn>
+            </div>
+          </v-row>
         </div>
+      </v-col>
+    </v-row>
+
 
         <v-list>
   <div v-for="order in orders" :key="order.id">
@@ -809,8 +849,7 @@ function dijkstra(graph, startNode, endNode) {
     <v-divider></v-divider> 
   </div>
 </v-list>
-      </v-col>
-    </v-row>
+
     
     <v-row>
       <v-col cols="4">
@@ -1157,14 +1196,15 @@ function dijkstra(graph, startNode, endNode) {
 }
 
 .order-container {
-  padding: 10px;
+  padding: 24px;
   border-radius: 30px;
-  margin-bottom:10px;
+  margin-bottom: 18px;
 }
 
 .courier-container  {
   padding: 10px;
   margin-bottom: 10px;
+  margin-top: 30px;
   border-radius: 18px;
 }
 .clerk-container {
@@ -1177,6 +1217,7 @@ function dijkstra(graph, startNode, endNode) {
   padding: 10px;
   border-radius: 18px;
   margin-bottom: 10px;
+  margin-top: 30px;
 }
 
 .clerk-col {

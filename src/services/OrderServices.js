@@ -19,4 +19,11 @@ export default {
   deleteOrder(orderId) {
     return apiClient.delete("/orders/" + orderId);
   },
+  getRecentOrders() {
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - 30);
+
+    return apiClient.get(`/orders?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`);
+  },
 };
