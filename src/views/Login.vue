@@ -53,7 +53,18 @@ async function login() {
         color: "green",
         text: "Login successful!"
       };
-      router.push({ name: "map" })
+      const user = data.data;
+      
+      // Depending on the role, route to different pages
+      if(user.isClerk) {
+        router.push({ name: "clerkdashboard" });
+      } else if(user.isCourier) {
+        router.push({ name: "courierdashboard" });
+      } else if(user.isAdmin) {
+        router.push({ name: "dashboard" });
+      } else {
+        router.push({ name: "map" }); // default routing if no role matched
+      }
     })
     .catch((error) => {
       console.log(error);
@@ -64,6 +75,8 @@ async function login() {
       };
     });
 }
+
+
 
 
 function openCreateAccount() {
@@ -102,30 +115,19 @@ async function forgotPassword() {
 </script>
 
 <template>
-  <v-container>
-    <div id="body">
-      <v-card class="rounded-lg elevation-5">
-        <v-card-title class="headline mb-2">Login </v-card-title>
+  <v-container class="login-container">
+    <div id="body" class="login-wrapper">
+      <v-card class="rounded-lg elevation-5 login-card">
+        <v-card-title class="headline mb-2">Login</v-card-title>
         <v-card-text>
-          <v-text-field
-            v-model="user.email"
-            label="Email"
-            required
-          ></v-text-field>
-
-          <v-text-field
-            v-model="user.password"
-            label="Password"
-            required
-          ></v-text-field>
+          <v-text-field v-model="user.email" label="Email" required></v-text-field>
+          <v-text-field v-model="user.password" label="Password" required></v-text-field>
         </v-card-text>
         <v-card-actions>
           <v-btn variant="flat" color="secondary" @click="openCreateAccount()">Create Account</v-btn>
           <v-spacer></v-spacer>
-
-          <v-btn variant="flat" color="primary" @click="login()">Login</v-btn>
-
-          <v-btn variant="flat" color="secondary" @click="forgotPassword">Forgot Password</v-btn>
+          <v-btn variant="flat" color="green" @click="login()">Login</v-btn>
+          <v-btn variant="flat" color="secondary" @click="forgotPassword()">Forgot Password</v-btn>
         </v-card-actions>
       </v-card>
 
@@ -157,3 +159,19 @@ async function forgotPassword() {
     </div>
   </v-container>
 </template>
+
+
+<style>
+.login-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 500px;
+}
+
+.login-wrapper {
+  width: 70%;
+  height: 80%; 
+  padding-top: 20px;
+}
+</style>

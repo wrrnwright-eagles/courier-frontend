@@ -56,7 +56,7 @@ function logout() {
       <v-menu v-if="user !== null" min-width="200px" rounded>
         <template v-slot:activator="{ props }">
           <v-btn icon v-bind="props">
-            <v-avatar class="mx-auto text-center" color="accent" size="large">
+            <v-avatar class="mx-auto text-center" color="green" size="large">
               <span class="white--text font-weight-bold">{{
                 `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`
               }}</span>
@@ -66,7 +66,7 @@ function logout() {
         <v-card>
           <v-card-text>
             <div class="mx-auto text-center">
-              <v-avatar color="accent">
+              <v-avatar color="green">
                 <span class="white--text text-h5">{{
                   `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`
                 }}</span>
