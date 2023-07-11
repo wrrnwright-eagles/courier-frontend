@@ -430,32 +430,39 @@ function closeEditCustomer() {
 }
 
 async function updateCustomer(customer) {
-try {
-    const response = await CustomerServices.updateCustomer(customer);
-    if (response.data && response.data.message === 'Customer was updated successfully.') {
-      snackbar.value = {
-        value: true,
-        color: "green",
-        text: "Customer updated successfully!",
-      };
-      getCustomers();
-    } else {
-      console.error("Invalid response data:", response.data);
-      snackbar.value = {
-        value: true,
-        color: "error",
-        text: "Failed to update customer!",
-      };
-    }
-  } catch (error) {
-    console.log(error);
+  try {
+    await PickupCustomerServices.updatePickupCustomer(customer);
     snackbar.value = {
       value: true,
-      color: "error",
-      text: "Failed to update customer!",
+      color: 'black',
+      text: 'Pickup Customer Updated Successfully!'
+    };
+    getPickupCustomers();
+    return;
+  } catch (error) {
+    console.log('Error updating Pickup Customer:', error);
+  }
+
+  try {
+    await DeliveryCustomerServices.updateDeliveryCustomer(customer);
+    snackbar.value = {
+      value: true,
+      color: 'black',
+      text: 'Delivery Customer Updated Successfully!'
+    };
+    getDeliveryCustomers();
+    return;
+  } catch (error) {
+    console.log('Error updating Delivery Customer:', error);
+    snackbar.value = {
+      value: true,
+      color: 'red',
+      text: error.response.data.message
     };
   }
 }
+
+
 
 
 async function saveCustomer() {
@@ -501,11 +508,6 @@ async function deleteCustomer(customer) {
   }
 }
 }
-
-
-
-
-
 
 async function addOrder() {
   isAddOrder.value = false;
