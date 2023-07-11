@@ -1,36 +1,54 @@
 <script setup>
 import { onMounted, ref } from "vue";
 import { useRoute } from "vue-router";
-import DeliveryCustomerServices from "../services/DeliveryCustomerServices.js";
-import PickupCustomerServices from "../services/PickupCustomerServices.js";
-import OrderServices from "../services/OrderServices.js";
-import courierImage from '../courier.png';
 import CourierServices from "../services/CourierServices.js";
+import PickupCustomerServices from "../services/PickupCustomerServices.js";
+import DeliveryCustomerServices from "../services/DeliveryCustomerServices.js";
+import OrderServices from "../services/OrderServices.js"
+import ClerkServices from "../services/ClerkServices.js";
+import NodeServices from "../services/NodeServices.js";
+import EdgeServices from "../services/EdgeServices.js";
+import courierImage from '../courier.png';
 
 const route = useRoute();
-const deliveryCustomers = ref([]);
-const pickupCustomers = ref([]);
-const couriers = ref([]);
-const orders = ref([]);
-const isCourier = ref(false);
-const selectedOrder = ref({});
-const isAddOrder = ref(false);
-const isEditOrder = ref(false);
-const newOrder = ref({
-  id: undefined,
-  date: undefined,
-  time: undefined,
-  pickupCustomer: undefined,
-  deliveryCustomer: undefined,
-  courier: undefined,
-  blocks: undefined,
-  price: undefined,
-})
 const snackbar = ref({
   value: false,
   color: '',
   text: ''
 });
+const couriers = ref([]);
+const selectedCourier = ref({
+  id: null,
+  courierNumber: "",
+  name: "",
+});
+const isAddCourier = ref(false);
+const isEditCourier = ref(false);
+const deliveryCustomers = ref([]);
+const pickupCustomers = ref([]);
+const selectedCustomer = ref({});
+const isAddCustomer = ref(false);
+const isEditCustomer = ref(false);
+const confirmDelete = ref(false);
+const orders = ref([]);
+const selectedOrder = ref({});
+const isAddOrder = ref(false);
+const isEditOrder = ref(false);
+
+const officeNode = "C3";
+const nodes = ref([]);
+const edges = ref([]);
+
+const newOrder = ref({
+  id: undefined,
+  date: undefined,
+  time: undefined,
+  pickupCustomerId: undefined,
+  deliveryCustomerId: undefined,
+  courierId: undefined,
+  blocks: undefined,
+  price: undefined,
+})
 
 onMounted(async () => {
   await getPickupCustomers();
@@ -39,19 +57,30 @@ onMounted(async () => {
   await getOrders();
 });
 
-async function getPickupCustomers() {
-    try {
-    const response = await PickupCustomerServices.getPickupCustomers();
-    pickupCustomers.value = response.data;
-  } catch (error) {
-    console.log(error);
-  }
+function getCustomerName(id, type) {
+  const customers = type === 'pickup' ? pickupCustomers.value : deliveryCustomers.value;
+  const customer = customers.find(c => c.id === id);
+  return customer ? customer.name : '';
+}
+
+function getCourierName(id) {
+  const courier = couriers.value.find(c => c.id === id);
+  return courier ? courier.name : '';
 }
 
 async function getDeliveryCustomers() {
     try {
     const response = await DeliveryCustomerServices.getDeliveryCustomers();
     deliveryCustomers.value = response.data;
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+async function getPickupCustomers() {
+    try {
+    const response = await PickupCustomerServices.getPickupCustomers();
+    pickupCustomers.value = response.data;
   } catch (error) {
     console.log(error);
   }
@@ -66,12 +95,37 @@ async function getCouriers() {
   }
 }
 
-
 async function getOrders() {
     try {
-    const response = await OrderServices.getOrder(route.params.id);
-    console.log(response.data);
+    const response = await OrderServices.getOrders(route.params.id);
     orders.value = response.data;
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+async function getClerks() {
+    try {
+    const response = await ClerkServices.getClerks(route.params.id);
+    clerks.value = response.data;
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+async function getNodes() {
+    try {
+    const response = await NodeServices.getNodes();
+    nodes.value = response.data;
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+async function getEdges() {
+    try {
+    const response = await EdgeServices.getEdges();
+    edges.value = response.data;
   } catch (error) {
     console.log(error);
   }
@@ -80,6 +134,83 @@ async function getOrders() {
 async function addOrder() {
   isAddOrder.value = false;
   delete newOrder.value.id;
+  console.log(newOrder.value);
+  let pickupLocation = "";
+  let deliveryLocation = "";
+  for (let i = 0; i < pickupCustomers.value.length; i++) {
+    for (let j=0; j < deliveryCustomers.value.length; j++) {
+      if(pickupCustomers.value[i].id === newOrder.value.pickupCustomerId) {
+        if(deliveryCustomers.value[j].id === newOrder.value.deliveryCustomerId) {
+          pickupLocation += pickupCustomers.value[i].locationNode;
+          deliveryLocation += deliveryCustomers.value[j].locationNode;
+        }
+      }
+    }
+  };
+
+
+  const nodeTable = [];
+  const edgeTable = [];
+
+  for (let i = 0; i < nodes.value.length; i++) {
+    const node = nodes.value[i].node;
+    nodeTable.push(node);
+  }
+
+  for (let i = 0; i < edges.value.length; i++) {
+    const fromNode = edges.value[i].fromNode;
+    const toNode = edges.value[i].toNode;
+    const weight = edges.value[i].weight;
+    edgeTable.push({ fromNode, toNode, weight });
+  }
+
+  const graph = createGraph(nodeTable, edgeTable);
+
+  //const { distances, previous, path, visitedNodes } = dijkstra(graph, pickupLocation, deliveryLocation);
+
+  const route1 = dijkstra(graph, officeNode, pickupLocation);
+  const route2 = dijkstra(graph, pickupLocation, deliveryLocation);
+  const route3 = dijkstra(graph, deliveryLocation, officeNode);
+
+  const distances1 = route1.distances;
+  const previous1 = route1.previous;
+  const path1 = route1.path;
+  const visitedNodes1 = route1.visitedNodes;
+
+  const distances2 = route2.distances;
+  const previous2 = route2.previous;
+  const path2 = route2.path;
+  const visitedNodes2 = route2.visitedNodes;
+
+  const distances3 = route3.distances;
+  const previous3 = route3.previous;
+  const path3 = route3.path;
+  const visitedNodes3 = route3.visitedNodes;
+  
+  const distances = { ...distances1, ...distances2, ...distances3 };
+  const previous = { ...previous1, ...previous2, ...previous3 };
+  const path = [...path1, ...path2, ...path3];
+  const visitedNodes = [...visitedNodes1, ...visitedNodes2, ...visitedNodes3];
+
+  console.log('Combined Results:');
+  console.log('Distances:', distances);
+  console.log('Previous Nodes:', previous);
+  console.log('Shortest Path:', path.join(' -> '));
+  console.log('Visited Nodes:', visitedNodes);
+
+  /*
+  console.log(distances);
+  console.log(previous);
+  console.log('Shortest path:', path.join(' -> '));
+  console.log('Visited nodes:', visitedNodes);
+  */
+
+  newOrder.value.blocks = (visitedNodes.length - 1);
+  newOrder.value.price = ((1.5 * (visitedNodes.length - 1)) + 5);
+
+  console.log("blocks = " + newOrder.value.blocks);
+  console.log("price = $" + newOrder.value.price);
+
   try {
     await OrderServices.addOrder(newOrder.value);
     snackbar.value = {
@@ -95,16 +226,16 @@ async function addOrder() {
       color: 'red',
       text: error.response.data.message
     };
-  }
+  };
 }
 
 function openAddOrder() {
-  console.log("Opening Add Order");
   newOrder.value.date = undefined;
   newOrder.value.time = undefined;
-  newOrder.value.pickup = {};
-  newOrder.value.delivery = {};
-  newOrder.value.courier = {};
+  newOrder.value.pickupCustomerId = undefined;
+  newOrder.value.deliveryCustomerId = undefined;
+  newOrder.value.courierId = undefined;
+  newOrder.value.blocks = undefined;
   newOrder.value.price = undefined;
   isAddOrder.value = true;
 }
@@ -172,6 +303,77 @@ async function deleteOrder(id) {
   }
 }
 
+function createGraph(nodeTable, edgeTable) {
+  const graph = {};
+
+  // Add nodes to the graph
+  for (const node of nodeTable) {
+    graph[node] = {};
+  }
+
+  // Add edges to the graph with weights
+  for (const edge of edgeTable) {
+    const { fromNode, toNode, weight } = edge;
+    graph[fromNode][toNode] = weight;
+  }
+
+  return graph;
+}
+
+function dijkstra(graph, startNode, endNode) {
+  const distances = {};
+  const visited = {};
+  const previous = {};
+  const queue = [];
+
+  for (const node in graph) {
+    distances[node] = Infinity;
+  }
+  distances[startNode] = 0;
+
+  queue.push(startNode);
+
+  while (queue.length > 0) {
+    queue.sort((a,b) => distances[a] - distances[b]);
+    const current = queue.shift();
+    visited[current] = true;
+
+    if (current === endNode) {
+      break;
+    }
+
+    for (const neighbor in graph[current]) {
+      const distance = graph[current][neighbor];
+      const totalDistance = distances[current] + distance;
+
+      if (totalDistance < distances[neighbor]) {
+        distances[neighbor] = totalDistance;
+        previous[neighbor] = current;
+
+        if (!visited[neighbor]) {
+          queue.push(neighbor);
+        }
+      }
+    }
+  }
+
+  const path = [];
+  let current = endNode;
+  while (current) {
+    path.unshift(current);
+    current = previous[current];
+  }
+
+  const visitedNodes = [];
+  for (const node of path) {
+    visitedNodes.push({ node, distance: distances[node] });
+  }
+
+  return {distances, previous, path, visitedNodes};
+}
+
+
+
 </script>
 
 <template>
@@ -193,18 +395,54 @@ async function deleteOrder(id) {
         <div class="order-container rounded" style="background-color: darkgreen;">
           <h2 style="color: white;">Orders</h2>
           <div class="icon">
-            <v-icon size="x-small" @click="openAddOrder()">
-              mdi-plus
+          </div>
+        </div>
+        <v-list>
+  <div v-for="order in orders" :key="order.id">
+    <v-list-item>
+      <v-list-item-content>
+        <div class="d-flex justify-space-between align-center">
+          <div>
+            <h4 class="mb-1">{{ getCustomerName(order.pickupCustomerId, 'pickup') }} &#x2794; {{ getCustomerName(order.deliveryCustomerId, 'delivery') }}</h4>
+            <div class="mb-2">
+              <v-chip small color="green">{{ order.blocks }} Blocks</v-chip>
+              <v-chip small color="blue">{{ getCourierName(order.courierId) }}</v-chip>
+              <v-chip small color="red">Price: ${{ order.price }} </v-chip>
+            </div>
+            <div class="mb-1">{{ order.date }}, {{ order.time }}</div>
+          </div>
+          <div class="actions">
+            <v-icon large @click="openEditOrder(order)">
+              mdi-pencil
+            </v-icon>
+            <v-icon large @click="deleteOrder(order.id)">
+              mdi-trash-can
             </v-icon>
           </div>
         </div>
+      </v-list-item-content>
+    </v-list-item>
+    <v-divider></v-divider> 
+  </div>
+</v-list>
+      </v-col>
+    </v-row>
+    <v-row justify="center">
+      <v-col cols="auto">
+        <v-btn class="mt-3 custom-green-button" large dark @click="openAddOrder">
+          <v-icon left>mdi-plus</v-icon>
+          Add Order
+        </v-btn>
+  </v-col>
+</v-row>
 
-        <v-dialog v-model="isAddOrder">
-  <v-card>
-    <v-card-title>Add Order</v-card-title>
-    <v-card-text>
-      <v-form @submit.prevent="addOrder">
-        <v-text-field label="Pickup Date" type="date" v-model="newOrder.date" required />
+
+  <v-dialog v-model="isAddOrder">
+      <v-card>
+        <v-card-title>Add Order</v-card-title>
+        <v-card-text>
+          <v-form @submit.prevent="addOrder">
+            <v-text-field label="Pickup Date" type="date" v-model="newOrder.date" required />
             <v-text-field label="Pickup Time" type="datetime-local" v-model="newOrder.time"
                required />
             <v-select label="Pickup Customer" v-model="newOrder.pickupCustomerId"
@@ -213,30 +451,16 @@ async function deleteOrder(id) {
               :items="deliveryCustomers" item-title="name" item-value="id" return-value required />
             <v-select label="Courier" v-model="newOrder.courierId" 
               :items="couriers" item-title="name" item-value="id" return-value  required />
->
-        <v-spacer></v-spacer>
-        <v-btn color="green darken-1" text @click="closeAddOrder">Cancel</v-btn>
-        <v-btn color="green darken-1" text @click="addOrder">Add Order</v-btn>
-      </v-form>
-    </v-card-text>
-  </v-card>
-</v-dialog>
-
-        <v-list>
-  <v-list-item v-for="order in orders" :key="order.id">
-    <v-list-item-title>{{ order.date }} {{ order.pickup.name }}</v-list-item-title>
-    <v-list-item-action>
-      <v-icon size="x-small" @click="openEditOrder(order)">
-        mdi-pencil
-      </v-icon>
-      <v-icon size="x-small" @click="deleteOrder(order.id)">
-       mdi-trash-can
-      </v-icon>
-    </v-list-item-action>
-  </v-list-item>
-</v-list>
-      </v-col>
-    </v-row>
+            <v-spacer></v-spacer>
+            <v-btn color="green darken-1" text @click="closeAddOrder">Cancel</v-btn>
+            <v-btn color="green darken-1" text @click="addOrder">Add Order</v-btn>
+          </v-form>
+        </v-card-text>
+      </v-card>
+    </v-dialog>
+    <v-snackbar v-model="snackbar.value" :color="snackbar.color" :timeout="3000" rounded="pill">
+  {{ snackbar.text }}
+</v-snackbar>
   </v-container>
 </template>
 
@@ -263,4 +487,17 @@ async function deleteOrder(id) {
   border-radius: 50%;
   overflow: hidden;
 }
+
+.order-container {
+  padding: 10px;
+  border-radius: 30px;
+  margin-bottom:10px;
+}
+
+.custom-green-button {
+    background-color: darkgreen !important;
+    color: white !important;
+    margin-top: 10px; /* Adjust the margin as per your requirement */
+    font-size: 22px;
+  }
 </style>
