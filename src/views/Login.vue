@@ -144,7 +144,7 @@ async function forgotPassword() {
           <v-card-actions>
             <v-spacer></v-spacer>
             <v-btn variant="flat" color="secondary" @click="closeCreateAccount()">Close</v-btn>
-            <v-btn variant="flat" color="primary" @click="createAccount()">Create Account</v-btn>
+            <v-btn variant="flat" color="green" @click="createAccount()">Create Account</v-btn>
           </v-card-actions>
         </v-card>
       </v-dialog>
