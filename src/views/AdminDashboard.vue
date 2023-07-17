@@ -1026,8 +1026,8 @@ function dijkstra(graph, startNode, endNode) {
     <v-card-title>Edit Order</v-card-title>
     <v-card-text>
       <v-form @submit.prevent="updateOrder(newOrder)">
-        <v-text-field label="Pickup Date" type="date" v-model="newOrder.date" required />
-        <v-text-field label="Pickup Time" type="datetime-local" v-model="newOrder.time" />
+        <v-text-field label="Pickup Date" type="date" v-model="selectedOrder.date" required />
+        <v-text-field label="Pickup Time" type="datetime-local" v-model="selectedOrder.time" required />
         <v-select label="Pickup" v-model="newOrder.pickupCustomerId" 
           :items="pickupCustomers" item-title="name" item-value="id" required />
         <v-select label="Delivery" v-model="newOrder.deliveryCustomerId" 
