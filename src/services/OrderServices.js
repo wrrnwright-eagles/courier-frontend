@@ -14,6 +14,7 @@ export default {
     return apiClient.post("/orders", order);
   },
   updateOrder(order) {
+    console.log(order);
     return apiClient.put("/orders/" + order.id, order);
   },
   deleteOrder(orderId) {
@@ -25,5 +26,8 @@ export default {
     startDate.setDate(startDate.getDate() - 30);
 
     return apiClient.get(`/orders?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`);
+  },
+  getOrdersForCourier(courierId) {
+    return apiClient.get("/orders/courier/" + courierId);
   },
 };

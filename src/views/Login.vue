@@ -48,6 +48,9 @@ async function login() {
   await UserServices.loginUser(user.value)  
     .then((data) => {
       window.localStorage.setItem("user", JSON.stringify(data.data));
+      if (data.data.isCourier) {
+        window.localStorage.setItem("courierId", data.data.id);
+      }
       snackbar.value = {
         value: true,
         color: "green",
@@ -62,8 +65,6 @@ async function login() {
         router.push({ name: "courierdashboard" });
       } else if(user.isAdmin) {
         router.push({ name: "dashboard" });
-      } else {
-        router.push({ name: "map" }); // default routing if no role matched
       }
     })
     .catch((error) => {
@@ -75,6 +76,7 @@ async function login() {
       };
     });
 }
+
 
 
 

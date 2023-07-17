@@ -92,9 +92,10 @@ async function getCouriers() {
 }
 
 async function getOrders() {
-    try {
+  try {
     const response = await OrderServices.getOrders(route.params.id);
-    orders.value = response.data;
+    const courierId = window.localStorage.getItem("courierId");
+    orders.value = response.data.filter(order => order.courierId === courierId);
   } catch (error) {
     console.log(error);
   }
