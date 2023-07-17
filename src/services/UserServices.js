@@ -30,7 +30,9 @@ async function logoutUser() {
 async function forgotPassword(email) {
   return apiClient.post("forgot-password", { email });
 }
-
+async function getUsers() {
+  return apiClient.get("users");
+}
 
 export default {
   getUser,
@@ -38,4 +40,5 @@ export default {
   loginUser,
   logoutUser,
   forgotPassword,
+  getUsers,
 };

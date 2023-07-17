@@ -38,12 +38,10 @@ const orders = ref([]);
 const selectedOrder = ref({});
 const isAddOrder = ref(false);
 const isEditOrder = ref(false);
-
 const officeNode = "C3";
 const nodes = ref([]);
 const edges = ref([]);
 const paths = ref([]);
-
 const clerks = ref([]);
 const isAddClerk = ref(false);
 const isEditClerk = ref(false);
@@ -103,6 +101,7 @@ onMounted(async () => {
 });
 
 // Get Methods
+
 
 function getCustomerName(id, type) {
   const customers = type === 'pickup' ? pickupCustomers.value : deliveryCustomers.value;
@@ -698,17 +697,22 @@ function closeEditOrder() {
 
 async function updateOrder(order) {
   try {
+    console.log(order);
     const response = await OrderServices.updateOrder(order);
-    const index = response.data.findIndex((o) => o.id === order.id);
-    if (index !== -1) {
-      response.data[index] = order;
-    }
-    snackbar.value = {
-      value: true,
-      color: "success",
-      text: "Order updated successfully!"
-    };
-    getOrders(); 
+    console.log(response);
+
+    if (response.status === 200) {
+  snackbar.value = {
+    value: true,
+    color: "green",
+    text: "Order updated successfully!"
+  };
+  isEditOrder.value = false; 
+} else {
+  throw new Error(response.data.message || "Unexpected response format");
+}
+
+    getOrders();
   } catch (error) {
     console.log(error);
     snackbar.value = {
@@ -718,6 +722,9 @@ async function updateOrder(order) {
     };
   }
 }
+
+
+
 async function deleteOrder(id) {
   const confirmDialog = confirm("Are you sure you want to delete this order?");
   if (confirmDialog) {
@@ -1001,7 +1008,7 @@ function dijkstra(graph, startNode, endNode) {
               :items="pickupCustomers" item-title="name" item-value="id" return-value required />
             <v-select label="Delivery Customer" v-model="newOrder.deliveryCustomerId" 
               :items="deliveryCustomers" item-title="name" item-value="id" return-value required />
-            <v-select label="Courier" v-model="newOrder.courierId" 
+              <v-select label="Courier" v-model="newOrder.courierId" 
               :items="couriers" item-title="name" item-value="id" return-value  required />
             <v-spacer></v-spacer>
             <v-btn color="green darken-1" text @click="closeAddOrder">Cancel</v-btn>
@@ -1018,22 +1025,23 @@ function dijkstra(graph, startNode, endNode) {
   <v-card>
     <v-card-title>Edit Order</v-card-title>
     <v-card-text>
-      <v-form @submit.prevent="updateOrder">
-        <v-text-field label="Date" v-model="selectedOrder.date" required />
-        <v-text-field label="Time" v-model="selectedOrder.time" required />
-        <v-select label="Pickup" v-model="selectedOrder.pickupCustomerId" 
+      <v-form @submit.prevent="updateOrder(newOrder)">
+        <v-text-field label="Pickup Date" type="date" v-model="newOrder.date" required />
+        <v-text-field label="Pickup Time" type="datetime-local" v-model="newOrder.time" />
+        <v-select label="Pickup" v-model="newOrder.pickupCustomerId" 
           :items="pickupCustomers" item-title="name" item-value="id" required />
-        <v-select label="Delivery" v-model="selectedOrder.deliveryCustomerId" 
+        <v-select label="Delivery" v-model="newOrder.deliveryCustomerId" 
           :items="deliveryCustomers" item-title="name" item-value="id" required />
-        <v-text-field label="Courier" v-model="selectedOrder.courier" required />
-        <v-text-field label="Price" v-model="selectedOrder.price" required />
+          <v-select label="Courier" v-model="newOrder.courierId" 
+              :items="couriers" item-title="name" item-value="id" return-value  required />
         <v-spacer></v-spacer>
         <v-btn color="green darken-1" text @click="isEditOrder = false">Cancel</v-btn>
-        <v-btn color="green darken-1" text @click="updateOrder">Save</v-btn>
+        <v-btn color="green darken-1" text @click="console.log(newOrder); updateOrder(newOrder)">Save</v-btn>
       </v-form>
     </v-card-text>
   </v-card>
 </v-dialog>
+
 
   <!-- Edit Courier Dialog -->
   <v-dialog v-model="isEditCourier">

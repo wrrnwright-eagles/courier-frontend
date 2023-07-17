@@ -26,6 +26,7 @@ function logout() {
       console.log(error);
     });
   localStorage.removeItem("user");
+  window.localStorage.removeItem("courierId");
   user.value = null;
   router.push({ name: "login" });
 }
@@ -49,9 +50,6 @@ function logout() {
       </v-btn>
       <v-btn v-if="user !== null && user.isClerk" class="mx-2" :to="{ name: 'clerkdashboard' }">
         Dashboard
-      </v-btn>
-      <v-btn v-if="user !== null" class="mx-2" :to="{ name: 'map' }">
-        Map
       </v-btn>
       <v-menu v-if="user !== null" min-width="200px" rounded>
         <template v-slot:activator="{ props }">
