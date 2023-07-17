@@ -261,17 +261,22 @@ function closeEditOrder() {
 
 async function updateOrder(order) {
   try {
+    console.log(order);
     const response = await OrderServices.updateOrder(order);
-    const index = response.data.findIndex((o) => o.id === order.id);
-    if (index !== -1) {
-      response.data[index] = order;
-    }
-    snackbar.value = {
-      value: true,
-      color: "success",
-      text: "Order updated successfully!"
-    };
-    getOrders(); 
+    console.log(response);
+
+    if (response.status === 200) {
+  snackbar.value = {
+    value: true,
+    color: "green",
+    text: "Order updated successfully!"
+  };
+  isEditOrder.value = false; 
+} else {
+  throw new Error(response.data.message || "Unexpected response format");
+}
+
+    getOrders();
   } catch (error) {
     console.log(error);
     snackbar.value = {
@@ -462,6 +467,28 @@ function dijkstra(graph, startNode, endNode) {
     <v-snackbar v-model="snackbar.value" :color="snackbar.color" :timeout="3000" rounded="pill">
   {{ snackbar.text }}
 </v-snackbar>
+
+ <!-- Edit Order Dialog -->
+ <v-dialog v-model="isEditOrder">
+  <v-card>
+    <v-card-title>Edit Order</v-card-title>
+    <v-card-text>
+      <v-form @submit.prevent="updateOrder(newOrder)">
+        <v-text-field label="Pickup Date" type="date" v-model="selectedOrder.date" required />
+        <v-text-field label="Pickup Time" type="datetime-local" v-model="selectedOrder.time" required />
+        <v-select label="Pickup" v-model="newOrder.pickupCustomerId" 
+          :items="pickupCustomers" item-title="name" item-value="id" required />
+        <v-select label="Delivery" v-model="newOrder.deliveryCustomerId" 
+          :items="deliveryCustomers" item-title="name" item-value="id" required />
+          <v-select label="Courier" v-model="newOrder.courierId" 
+              :items="couriers" item-title="name" item-value="id" return-value  required />
+        <v-spacer></v-spacer>
+        <v-btn color="green darken-1" text @click="isEditOrder = false">Cancel</v-btn>
+        <v-btn color="green darken-1" text @click="console.log(newOrder); updateOrder(newOrder)">Save</v-btn>
+      </v-form>
+    </v-card-text>
+  </v-card>
+</v-dialog>
   </v-container>
 </template>
 
