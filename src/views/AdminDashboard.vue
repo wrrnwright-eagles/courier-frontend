@@ -42,6 +42,7 @@ const isEditOrder = ref(false);
 const officeNode = "C3";
 const nodes = ref([]);
 const edges = ref([]);
+const paths = ref([]);
 
 const clerks = ref([]);
 const isAddClerk = ref(false);
@@ -80,6 +81,7 @@ const newOrder = ref({
   pickupCustomerId: undefined,
   deliveryCustomerId: undefined,
   courierId: undefined,
+  pathId: undefined,
   blocks: undefined,
   price: undefined,
 })
@@ -87,7 +89,6 @@ const newOrder = ref({
 const newPath = ref({
   id: undefined,
   path: undefined,
-  orderId: undefined,
 })
 
 onMounted(async () => {
@@ -98,6 +99,7 @@ onMounted(async () => {
   await getClerks();
   await getNodes();
   await getEdges();
+  await getPaths();
 });
 
 // Get Methods
@@ -171,6 +173,15 @@ async function getEdges() {
     try {
     const response = await EdgeServices.getEdges();
     edges.value = response.data;
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+async function getPaths() {
+    try {
+    const response = await PathServices.getPaths();
+    paths.value = response.data;
   } catch (error) {
     console.log(error);
   }
@@ -549,7 +560,7 @@ async function deleteCustomer(customer) {
 async function addOrder() {
   isAddOrder.value = false;
   delete newOrder.value.id;
-  console.log(newOrder.value);
+  //console.log(newOrder.value);
   let pickupLocation = "";
   let deliveryLocation = "";
   for (let i = 0; i < pickupCustomers.value.length; i++) {
@@ -607,34 +618,35 @@ async function addOrder() {
   const path = [...path1, ...path2, ...path3];
   const visitedNodes = [...visitedNodes1, ...visitedNodes2, ...visitedNodes3];
 
+  var lastPath = undefined;
 
+  
   try {
-    newPath.path = path.join(',');
-    newPath.orderId = newOrder.id;
+    newPath.value.path = path.join(',');
+    //console.log(newPath.value);
     await PathServices.addPath(newPath.value);
-    console.log(newPath.value);
+    await getPaths();
+    lastPath = paths.value.length - 1;
+    //console.log(lastPath);
+    //console.log(paths.value[lastPath].id);
+    
   } catch (error) {
     console.log(error);
   }
 
-  console.log('Combined Results:');
-  console.log('Distances:', distances);
-  console.log('Previous Nodes:', previous);
-  console.log('Shortest Path:', path.join(' -> '));
-  console.log('Visited Nodes:', visitedNodes);
+  //console.log('Combined Results:');
+  //console.log('Distances:', distances);
+  //console.log('Previous Nodes:', previous);
+  //console.log('Shortest Path:', path.join(' -> '));
+  //console.log('Visited Nodes:', visitedNodes);
 
-  /*
-  console.log(distances);
-  console.log(previous);
-  console.log('Shortest path:', path.join(' -> '));
-  console.log('Visited nodes:', visitedNodes);
-  */
-
+  newOrder.value.pathId = paths.value[lastPath].id;
   newOrder.value.blocks = (visitedNodes.length - 1);
   newOrder.value.price = ((1.5 * (visitedNodes.length - 1)) + 5);
 
-  console.log("blocks = " + newOrder.value.blocks);
-  console.log("price = $" + newOrder.value.price);
+  //console.log("pathId = " + newOrder.value.pathId);
+  //console.log("blocks = " + newOrder.value.blocks);
+  //console.log("price = $" + newOrder.value.price);
 
   try {
     await OrderServices.addOrder(newOrder.value);
