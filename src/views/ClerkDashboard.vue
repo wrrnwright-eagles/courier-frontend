@@ -18,18 +18,9 @@ const snackbar = ref({
   text: ''
 });
 const couriers = ref([]);
-const selectedCourier = ref({
-  id: null,
-  courierNumber: "",
-  name: "",
-});
-const isAddCourier = ref(false);
-const isEditCourier = ref(false);
 const deliveryCustomers = ref([]);
 const pickupCustomers = ref([]);
 const selectedCustomer = ref({});
-const isAddCustomer = ref(false);
-const isEditCustomer = ref(false);
 const confirmDelete = ref(false);
 const orders = ref([]);
 const selectedOrder = ref({});
@@ -119,7 +110,6 @@ async function getCouriers() {
 }
 
 function getCourierName(id) {
-  // first, check in the list of couriers
   if (couriers.value && couriers.value.length > 0) {
     const courier = couriers.value.find(c => c.id === id);
     if (courier) {
@@ -133,8 +123,6 @@ function getCourierName(id) {
       return courierUser.name;
     }
   }
-
-  // return empty string if not found anywhere
   return '';
 }
 
@@ -142,15 +130,6 @@ async function getOrders() {
     try {
     const response = await OrderServices.getOrders(route.params.id);
     orders.value = response.data;
-  } catch (error) {
-    console.log(error);
-  }
-}
-
-async function getClerks() {
-    try {
-    const response = await ClerkServices.getClerks(route.params.id);
-    clerks.value = response.data;
   } catch (error) {
     console.log(error);
   }
@@ -209,11 +188,9 @@ if (newOrder.value.courierId && typeof newOrder.value.courierId === 'object' && 
     const weight = edges.value[i].weight;
     edgeTable.push({ fromNode, toNode, weight });
   }
-
   const graph = createGraph(nodeTable, edgeTable);
 
   //const { distances, previous, path, visitedNodes } = dijkstra(graph, pickupLocation, deliveryLocation);
-
   const route1 = dijkstra(graph, officeNode, pickupLocation);
   const route2 = dijkstra(graph, pickupLocation, deliveryLocation);
   const route3 = dijkstra(graph, deliveryLocation, officeNode);
@@ -239,35 +216,18 @@ if (newOrder.value.courierId && typeof newOrder.value.courierId === 'object' && 
   const visitedNodes = [...visitedNodes1, ...visitedNodes2, ...visitedNodes3];
 
   var lastPath = undefined;
-
-  
   try {
     newPath.value.path = path.join(',');
     //console.log(newPath.value);
     await PathServices.addPath(newPath.value);
     await getPaths();
     lastPath = paths.value.length - 1;
-    //console.log(lastPath);
-    //console.log(paths.value[lastPath].id);
-    
   } catch (error) {
     console.log(error);
   }
-
-  //console.log('Combined Results:');
-  //console.log('Distances:', distances);
-  //console.log('Previous Nodes:', previous);
-  //console.log('Shortest Path:', path.join(' -> '));
-  //console.log('Visited Nodes:', visitedNodes);
-
   ///newOrder.value.pathId = paths.value[lastPath].id;
   newOrder.value.blocks = (visitedNodes.length - 1);
   newOrder.value.price = ((1.5 * (visitedNodes.length - 1)) + 5);
-
-  //console.log("pathId = " + newOrder.value.pathId);
-  //console.log("blocks = " + newOrder.value.blocks);
-  //console.log("price = $" + newOrder.value.price);
-
   try {
     console.log('Order to be sent: ', newOrder.value);
 await OrderServices.addOrder(newOrder.value);
@@ -313,16 +273,11 @@ function openEditOrder(item) {
   isEditOrder.value = true;
 }
 
-
-
-
-
 function closeEditOrder() {
   isEditOrder.value = false;
 }
 
 async function updateOrder(order) {
-  // if the courierId is an object, extract the id from it
   if (order.courierId && typeof order.courierId === 'object') {
     order.courierId = order.courierId.id;
   }
@@ -376,13 +331,9 @@ async function deleteOrder(id) {
 
 function createGraph(nodeTable, edgeTable) {
   const graph = {};
-
-  // Add nodes to the graph
   for (const node of nodeTable) {
     graph[node] = {};
   }
-
-  // Add edges to the graph with weights
   for (const edge of edgeTable) {
     const { fromNode, toNode, weight } = edge;
     graph[fromNode][toNode] = weight;
@@ -507,9 +458,6 @@ function dijkstra(graph, startNode, endNode) {
         </v-btn>
   </v-col>
 </v-row>
-
-
-<!-- Add Order Dialog -->
 <v-dialog v-model="isAddOrder">
   <v-card>
     <v-card-title>Add Order</v-card-title>
@@ -530,8 +478,6 @@ function dijkstra(graph, startNode, endNode) {
     </v-card-text>
   </v-card>
 </v-dialog>
-
-<!-- Edit Order Dialog -->
 <v-dialog v-model="isEditOrder">
   <v-card>
     <v-card-title>Edit Order</v-card-title>
@@ -583,12 +529,19 @@ function dijkstra(graph, startNode, endNode) {
   padding: 10px;
   border-radius: 30px;
   margin-bottom:10px;
+  animation: fade 10s;
 }
 
 .custom-green-button {
     background-color: darkgreen !important;
     color: white !important;
-    margin-top: 10px; /* Adjust the margin as per your requirement */
+    margin-top: 10px; 
     font-size: 22px;
   }
+
+  @keyframes fade {
+
+  50%  {opacity: 1;}
+}
+
 </style>

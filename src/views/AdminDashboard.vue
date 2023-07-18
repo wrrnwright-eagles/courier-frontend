@@ -10,7 +10,6 @@ import NodeServices from "../services/NodeServices.js";
 import EdgeServices from "../services/EdgeServices.js";
 import PathServices from "../services/PathServices.js";
 import courierImage from '../courier.png';
-import { saveAs } from 'file-saver';
 import { jsPDF } from "jspdf";
 import UserServices from "../services/UserServices.js";
 
@@ -110,18 +109,11 @@ onMounted(async () => {
   courierUsers.value = await UserServices.getCourierUsers();  
 });
 
-
-// Get Methods
-
-
 function getCustomerName(id, type) {
   const customers = type === 'pickup' ? pickupCustomers.value : deliveryCustomers.value;
   const customer = customers.find(c => c.id === id);
   return customer ? customer.name : '';
 }
-
-
-
 
 async function getDeliveryCustomers() {
     try {
@@ -151,7 +143,7 @@ async function getCouriers() {
       courierNumber: courier.courierNumber,
     }));
 
-    const courierUsers = courierUsersResponse.data  // Access the data property here
+    const courierUsers = courierUsersResponse.data 
       .filter((user) => user.isCourier)
       .map((user) => ({
         id: user.id,
@@ -167,23 +159,18 @@ async function getCouriers() {
 }
 
 function getCourierName(id) {
-  // first, check in the list of couriers
   if (couriers.value && couriers.value.length > 0) {
     const courier = couriers.value.find(c => c.id === id);
     if (courier) {
       return courier.name;
     }
   }
-
-  // if not found in couriers, check in the list of users
   if (courierUsers.value && courierUsers.value.length > 0) {
     const courierUser = courierUsers.value.find(u => u.id === id);
     if (courierUser && courierUser.isCourier) {
       return courierUser.name;
     }
   }
-
-  // return empty string if not found anywhere
   return '';
 }
 
@@ -241,14 +228,11 @@ async function downloadLast30DaysOrders() {
     doc.text("Orders from last 30 days", 10, 10);
     let y = 20;
     for (const order of orders) {
-      // Format date in DD/MM/YYYY format
       const date = new Date(order.date);
       const formattedDate = `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
       const customerName = await getCustomerName(order.deliveryCustomerId, 'delivery');
-
       const line = `Order ID: ${order.id}, Date: ${formattedDate}, Price: $${order.price}, Customer: ${customerName}`;
       doc.text(line, 10, y);
-
       y += 10; 
     }
     doc.save("last-30-days-orders.pdf");
@@ -322,8 +306,6 @@ async function updateCourier() {
       color: "green",
       text: "Courier updated successfully!"
     };
-
-    // Fetch and set the updated couriers list
     couriers.value = await getCouriers();
   } catch (error) {
     console.log(error);
@@ -334,9 +316,6 @@ async function updateCourier() {
     };
   }
 }
-
-
-
 
 async function deleteCourier(id) {
   const confirmDialog = confirm("Are you sure you want to delete this courier?");
@@ -455,7 +434,7 @@ async function deleteClerk(id) {
   }
 }
 
-async function addCustomer() { // update this
+async function addCustomer() { 
   isAddCustomer.value = false;
   delete newCustomer.value.id;
   try {
@@ -557,10 +536,6 @@ async function updateCustomer(customer) {
     };
   }
 }
-
-
-
-
 async function saveCustomer() {
   try {
     await updateCustomer(selectedCustomer.value);
@@ -608,7 +583,6 @@ async function deleteCustomer(customer) {
 async function addOrder() {
   isAddOrder.value = false;
   delete newOrder.value.id;
-// if the courierId is an object, extract the id from it
 if (newOrder.value.courierId && typeof newOrder.value.courierId === 'object' && newOrder.value.courierId.id) {
   newOrder.value.courierId = newOrder.value.courierId.id;
 }
@@ -744,15 +718,11 @@ function openEditOrder(item) {
   isEditOrder.value = true;
 }
 
-
-
-
 function closeEditOrder() {
   isEditOrder.value = false;
 }
 
 async function updateOrder(order) {
-  // if the courierId is an object, extract the id from it
   if (order.courierId && typeof order.courierId === 'object') {
     order.courierId = order.courierId.id;
   }
@@ -1336,18 +1306,24 @@ function dijkstra(graph, startNode, endNode) {
 .image-container {
   border-radius: 50%;
   overflow: hidden;
+  animation: scale 5s;
 }
 
 .image-container img {
   width: 500px; 
   height: 350px; 
   object-fit: cover;
+  animation: scale 5s;
   border-radius: 50%;
   overflow: hidden;
+}
+@keyframes scale {
+  0%   {transform: scale(1);}
+  50%  {transform: scale(1.5);}
 }
 .order-detail {
   line-height: 1.5; 
   white-space: pre-line;
-  margin-right: 10px; /* This adds some space to the right of the text */
+  margin-right: 10px; 
 }
 </style>
