@@ -21,20 +21,16 @@ const selectedCourier = ref({
   courierNumber: "",
   name: "",
 });
-
+const bonus = ref(0);
 const deliveryCustomers = ref([]);
 const pickupCustomers = ref([]);
-
-
 const officeNode = "C3";
 const nodes = ref([]);
 const edges = ref([]);
-
 const route = useRoute();
 const customers = ref([]);
 const orders = ref([]);
 const isCourier = ref(false);
-
 const newOrder = ref({
   id: undefined,
   date: undefined,
@@ -47,11 +43,13 @@ const newOrder = ref({
 })
 
 onMounted(async () => {
-  await getPickupCustomers();
-  await getDeliveryCustomers();
-  await getCouriers();
-  await getOrders();
+  getOrders();
+  getPickupCustomers();
+  getDeliveryCustomers();
+  getCouriers();
+  setInterval(getOrders, 5000); // polling every 5 seconds
 });
+
 
 function getCustomerName(id, type) {
   const customers = type === 'pickup' ? pickupCustomers.value : deliveryCustomers.value;
@@ -95,10 +93,15 @@ async function getOrders() {
   try {
     const response = await OrderServices.getOrders(route.params.id);
     const courierId = window.localStorage.getItem("courierId");
-    console.log('CourierId from localStorage:', courierId); // For debugging
-    console.log('Response data:', response.data); // For debugging
     orders.value = response.data.filter(order => order.courierId == courierId);
-    console.log('Filtered orders:', orders.value); // For debugging
+
+    // Calculate bonus
+    orders.value.forEach(order => {
+      if (order.isDeliveredOnTime) { // assuming we have isDeliveredOnTime field
+        bonus.value++;
+      }
+    });
+
   } catch (error) {
     console.log(error);
   }
@@ -111,7 +114,7 @@ async function getOrders() {
   <v-container>
     <v-row justify="center">
       <v-col cols="12" class="text-center">
-        <v-card-title class="cool-title">
+        <v-card-title style="color: rgb(255, 255, 255); background-color: transparent" class="cool-title">
           Courier Dashboard
         </v-card-title>
       </v-col>
@@ -122,6 +125,13 @@ async function getOrders() {
           <h2 style="color: white;">Orders</h2>
           <div class="icon">
           </div>
+          <v-row>
+            <v-row class="d-flex justify-end">
+              <div class="bonus">
+  Bonus Tracker: {{ bonus }}
+</div>
+  </v-row>
+  </v-row>
         </div>
         <v-list>
           <div v-for="order in orders" :key="order.id">
@@ -140,7 +150,7 @@ async function getOrders() {
                   </div>
                   <div class="actions">
                     <div class="actions">
-  <v-btn color="green" :to="{ name: 'map' }">Start</v-btn>
+                      <v-btn color="green" :to="{ name: 'map', params: { orderId: order.id } }">Start</v-btn>
 </div>
                   </div>
                 </div>
@@ -164,10 +174,28 @@ async function getOrders() {
 }
 
 .cool-title {
-  font-size: 2.5rem; 
+  font-size: 3.0rem; 
   background: -webkit-linear-gradient(45deg, #1faf35, #073209);
   text-align: center;
+  font-family: 'Roboto Slab', serif;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
   border-radius: 30px;
+  font-weight: bold;
+  animation: mymove 5s;
+  padding: 25px;
+  margin-bottom: 25px;
+}
+@keyframes mymove {
+  50% {letter-spacing: 10px;}
+}
+
+.bonus {
+  font-size: 1.40rem; 
+  text-align: center;
+  display: block; 
+  padding: 5px;
+  color: white;
+  margin-right: 35px;
 }
 
 </style>
