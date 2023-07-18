@@ -34,6 +34,10 @@ async function getUsers() {
   return apiClient.get("users");
 }
 
+async function getCourierUsers() {
+  return apiClient.get("users/isCourier");
+}
+
 export default {
   getUser,
   addUser,
@@ -41,4 +45,5 @@ export default {
   logoutUser,
   forgotPassword,
   getUsers,
+  getCourierUsers,
 };
