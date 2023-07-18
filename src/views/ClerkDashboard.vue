@@ -35,11 +35,19 @@ const orders = ref([]);
 const selectedOrder = ref({});
 const isAddOrder = ref(false);
 const isEditOrder = ref(false);
-
+const addOrderData = ref({
+  date: undefined,
+  time: undefined,
+  pickupCustomerId: undefined,
+  deliveryCustomerId: undefined,
+  courierId: undefined,
+  blocks: undefined,
+  price: undefined,
+});
 const officeNode = "C3";
 const nodes = ref([]);
 const edges = ref([]);
-
+const courierUsers = ref([]);
 const newOrder = ref({
   id: undefined,
   date: undefined,
@@ -56,6 +64,7 @@ onMounted(async () => {
   await getDeliveryCustomers();
   await getOrders();
   couriers.value = await getCouriers();  
+  courierUsers.value = await UserServices.getCourierUsers();  
 });
 
 function getCustomerName(id, type) {
@@ -64,10 +73,6 @@ function getCustomerName(id, type) {
   return customer ? customer.name : '';
 }
 
-function getCourierName(id) {
-  const courier = couriers.value.find(c => c.id === id);
-  return courier ? courier.name : '';
-}
 
 async function getDeliveryCustomers() {
     try {
@@ -90,7 +95,7 @@ async function getPickupCustomers() {
 async function getCouriers() {
   try {
     const couriersResponse = await CourierServices.getCouriers();
-    const courierUsersResponse = await UserServices.getCourierUsers();
+    const courierUsersResponse = await UserServices.getCourierUsers(); 
 
     const couriers = couriersResponse.data.map((courier) => ({
       id: courier.id,
@@ -98,17 +103,39 @@ async function getCouriers() {
       courierNumber: courier.courierNumber,
     }));
 
-    const courierUsers = courierUsersResponse.data.map((user) => ({
-      id: user.id,
-      name: `${user.firstName} ${user.lastName}`,
-      courierNumber: user.id.toString(), 
-    }));
+    const courierUsers = courierUsersResponse.data 
+      .filter((user) => user.isCourier)
+      .map((user) => ({
+        id: user.id,
+        name: `${user.firstName} ${user.lastName}`,
+        courierNumber: user.id.toString(),
+      }));
 
     return [...couriers, ...courierUsers];
   } catch (error) {
     console.log(error);
     return [];
   }
+}
+
+function getCourierName(id) {
+  // first, check in the list of couriers
+  if (couriers.value && couriers.value.length > 0) {
+    const courier = couriers.value.find(c => c.id === id);
+    if (courier) {
+      return courier.name;
+    }
+  }
+
+  if (courierUsers.value && courierUsers.value.length > 0) {
+    const courierUser = courierUsers.value.find(u => u.id === id);
+    if (courierUser && courierUser.isCourier) {
+      return courierUser.name;
+    }
+  }
+
+  // return empty string if not found anywhere
+  return '';
 }
 
 async function getOrders() {
@@ -150,7 +177,10 @@ async function getEdges() {
 async function addOrder() {
   isAddOrder.value = false;
   delete newOrder.value.id;
-  console.log(newOrder.value);
+// if the courierId is an object, extract the id from it
+if (newOrder.value.courierId && typeof newOrder.value.courierId === 'object' && newOrder.value.courierId.id) {
+  newOrder.value.courierId = newOrder.value.courierId.id;
+}
   let pickupLocation = "";
   let deliveryLocation = "";
   for (let i = 0; i < pickupCustomers.value.length; i++) {
@@ -208,30 +238,42 @@ async function addOrder() {
   const path = [...path1, ...path2, ...path3];
   const visitedNodes = [...visitedNodes1, ...visitedNodes2, ...visitedNodes3];
 
-  console.log('Combined Results:');
-  console.log('Distances:', distances);
-  console.log('Previous Nodes:', previous);
-  console.log('Shortest Path:', path.join(' -> '));
-  console.log('Visited Nodes:', visitedNodes);
+  var lastPath = undefined;
 
-  /*
-  console.log(distances);
-  console.log(previous);
-  console.log('Shortest path:', path.join(' -> '));
-  console.log('Visited nodes:', visitedNodes);
-  */
+  
+  try {
+    newPath.value.path = path.join(',');
+    //console.log(newPath.value);
+    await PathServices.addPath(newPath.value);
+    await getPaths();
+    lastPath = paths.value.length - 1;
+    //console.log(lastPath);
+    //console.log(paths.value[lastPath].id);
+    
+  } catch (error) {
+    console.log(error);
+  }
 
+  //console.log('Combined Results:');
+  //console.log('Distances:', distances);
+  //console.log('Previous Nodes:', previous);
+  //console.log('Shortest Path:', path.join(' -> '));
+  //console.log('Visited Nodes:', visitedNodes);
+
+  ///newOrder.value.pathId = paths.value[lastPath].id;
   newOrder.value.blocks = (visitedNodes.length - 1);
   newOrder.value.price = ((1.5 * (visitedNodes.length - 1)) + 5);
 
-  console.log("blocks = " + newOrder.value.blocks);
-  console.log("price = $" + newOrder.value.price);
+  //console.log("pathId = " + newOrder.value.pathId);
+  //console.log("blocks = " + newOrder.value.blocks);
+  //console.log("price = $" + newOrder.value.price);
 
   try {
-    await OrderServices.addOrder(newOrder.value);
+    console.log('Order to be sent: ', newOrder.value);
+await OrderServices.addOrder(newOrder.value);
     snackbar.value = {
       value: true,
-      color: 'black',
+      color: 'green',
       text: 'Added Successfully!'
     };
     getOrders();
@@ -246,13 +288,13 @@ async function addOrder() {
 }
 
 function openAddOrder() {
-  newOrder.value.date = undefined;
-  newOrder.value.time = undefined;
-  newOrder.value.pickupCustomerId = undefined;
-  newOrder.value.deliveryCustomerId = undefined;
-  newOrder.value.courierId = undefined;
-  newOrder.value.blocks = undefined;
-  newOrder.value.price = undefined;
+  addOrderData.value.date = undefined;
+  addOrderData.value.time = undefined;
+  addOrderData.value.pickupCustomerId = undefined;
+  addOrderData.value.deliveryCustomerId = undefined;
+  addOrderData.value.courierId = undefined;
+  addOrderData.value.blocks = undefined;
+  addOrderData.value.price = undefined;
   isAddOrder.value = true;
 }
 
@@ -261,21 +303,29 @@ function closeAddOrder() {
 }
 
 function openEditOrder(item) {
-  newOrder.value.id = item.id;
-  newOrder.value.date = item.date;
-  newOrder.value.time = item.time;
-  newOrder.value.pickup = item.pickup;
-  newOrder.value.delivery = item.delivery;
-  newOrder.value.courier = item.courier;
-  newOrder.value.price = item.price;
+  selectedOrder.value.id = item.id;
+  selectedOrder.value.date = item.date;
+  selectedOrder.value.time = item.time;
+  selectedOrder.value.pickupCustomerId = item.pickupCustomerId;
+  selectedOrder.value.deliveryCustomerId = item.deliveryCustomerId;
+  selectedOrder.value.courierId = item.courierId;
+  selectedOrder.value.price = item.price;
   isEditOrder.value = true;
 }
+
+
+
+
 
 function closeEditOrder() {
   isEditOrder.value = false;
 }
 
 async function updateOrder(order) {
+  // if the courierId is an object, extract the id from it
+  if (order.courierId && typeof order.courierId === 'object') {
+    order.courierId = order.courierId.id;
+  }
   try {
     console.log(order);
     const response = await OrderServices.updateOrder(order);
@@ -459,48 +509,45 @@ function dijkstra(graph, startNode, endNode) {
 </v-row>
 
 
-  <v-dialog v-model="isAddOrder">
-      <v-card>
-        <v-card-title>Add Order</v-card-title>
-        <v-card-text>
-          <v-form @submit.prevent="addOrder">
-            <v-text-field label="Pickup Date" type="date" v-model="newOrder.date" required />
-            <v-text-field label="Pickup Time" type="datetime-local" v-model="newOrder.time"
-               required />
-            <v-select label="Pickup Customer" v-model="newOrder.pickupCustomerId"
-              :items="pickupCustomers" item-title="name" item-value="id" return-value required />
-            <v-select label="Delivery Customer" v-model="newOrder.deliveryCustomerId" 
-              :items="deliveryCustomers" item-title="name" item-value="id" return-value required />
-            <v-select label="Courier" v-model="newOrder.courierId" 
-              :items="couriers" item-title="name" item-value="id" return-value  required />
-            <v-spacer></v-spacer>
-            <v-btn color="green darken-1" text @click="closeAddOrder">Cancel</v-btn>
-            <v-btn color="green darken-1" text @click="addOrder">Add Order</v-btn>
-          </v-form>
-        </v-card-text>
-      </v-card>
-    </v-dialog>
-    <v-snackbar v-model="snackbar.value" :color="snackbar.color" :timeout="3000" rounded="pill">
-  {{ snackbar.text }}
-</v-snackbar>
+<!-- Add Order Dialog -->
+<v-dialog v-model="isAddOrder">
+  <v-card>
+    <v-card-title>Add Order</v-card-title>
+    <v-card-text>
+      <v-form @submit.prevent="addOrder">
+        <v-text-field label="Pickup Date" type="date" v-model="newOrder.date" required />
+        <v-text-field label="Pickup Time" type="datetime-local" v-model="newOrder.time" required />
+        <v-select label="Pickup Customer" v-model="newOrder.pickupCustomerId"
+          :items="pickupCustomers" item-title="name" item-value="id" return-value required />
+        <v-select label="Delivery Customer" v-model="newOrder.deliveryCustomerId"
+          :items="deliveryCustomers" item-title="name" item-value="id" return-value required />
+        <v-select label="Courier" v-model="newOrder.courierId"
+          :items="couriers" item-title="name" item-value="id" return-object required />
+        <v-spacer></v-spacer>
+        <v-btn color="green darken-1" text @click="closeAddOrder">Cancel</v-btn>
+        <v-btn color="green darken-1" text @click="addOrder">Add Order</v-btn>
+      </v-form>
+    </v-card-text>
+  </v-card>
+</v-dialog>
 
-  <!-- Edit Order Dialog -->
-  <v-dialog v-model="isEditOrder">
+<!-- Edit Order Dialog -->
+<v-dialog v-model="isEditOrder">
   <v-card>
     <v-card-title>Edit Order</v-card-title>
     <v-card-text>
-      <v-form @submit.prevent="updateOrder(newOrder)">
+      <v-form @submit.prevent="updateOrder(selectedOrder)">
         <v-text-field label="Pickup Date" type="date" v-model="selectedOrder.date" required />
         <v-text-field label="Pickup Time" type="datetime-local" v-model="selectedOrder.time" required />
-        <v-select label="Pickup" v-model="newOrder.pickupCustomerId" 
-          :items="pickupCustomers" item-title="name" item-value="id" required />
-        <v-select label="Delivery" v-model="newOrder.deliveryCustomerId" 
-          :items="deliveryCustomers" item-title="name" item-value="id" required />
-          <v-select label="Courier" v-model="newOrder.courierId" 
-              :items="couriers" item-title="name" item-value="id" return-value  required />
+        <v-select label="Pickup" v-model="selectedOrder.pickupCustomerId"
+          :items="pickupCustomers" item-title="name" item-value="id" return-value required />
+        <v-select label="Delivery" v-model="selectedOrder.deliveryCustomerId"
+          :items="deliveryCustomers" item-title="name" item-value="id" return-value required />
+        <v-select label="Courier" v-model="selectedOrder.courierId"
+          :items="couriers" item-title="name" item-value="id" return-object required />
         <v-spacer></v-spacer>
-        <v-btn color="green darken-1" text @click="isEditOrder = false">Cancel</v-btn>
-        <v-btn color="green darken-1" text @click="console.log(newOrder); updateOrder(newOrder)">Save</v-btn>
+        <v-btn color="green darken-1" text @click="closeEditOrder">Cancel</v-btn>
+        <v-btn color="green darken-1" text @click="updateOrder(selectedOrder)">Save</v-btn>
       </v-form>
     </v-card-text>
   </v-card>
