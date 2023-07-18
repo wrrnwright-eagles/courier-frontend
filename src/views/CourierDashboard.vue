@@ -95,11 +95,15 @@ async function getOrders() {
   try {
     const response = await OrderServices.getOrders(route.params.id);
     const courierId = window.localStorage.getItem("courierId");
-    orders.value = response.data.filter(order => order.courierId === courierId);
+    console.log('CourierId from localStorage:', courierId); // For debugging
+    console.log('Response data:', response.data); // For debugging
+    orders.value = response.data.filter(order => order.courierId == courierId);
+    console.log('Filtered orders:', orders.value); // For debugging
   } catch (error) {
     console.log(error);
   }
 }
+
 
 </script>
 
@@ -135,7 +139,9 @@ async function getOrders() {
                     <div class="mb-1">{{ order.date }}, {{ order.time }}</div>
                   </div>
                   <div class="actions">
-                    <v-btn color="green" :to="`/delivery/${order.id}`">Start</v-btn>
+                    <div class="actions">
+  <v-btn color="green" :to="{ name: 'map' }">Start</v-btn>
+</div>
                   </div>
                 </div>
               </v-list-item-content>
