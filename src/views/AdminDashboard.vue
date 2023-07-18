@@ -12,6 +12,7 @@ import PathServices from "../services/PathServices.js";
 import courierImage from '../courier.png';
 import { saveAs } from 'file-saver';
 import { jsPDF } from "jspdf";
+import UserServices from "../services/UserServices.js";
 
 
 const route = useRoute();
@@ -92,13 +93,14 @@ const newPath = ref({
 onMounted(async () => {
   await getDeliveryCustomers();
   await getPickupCustomers();
-  await getCouriers();
+  couriers.value = await getCouriers();  
   await getOrders();
   await getClerks();
   await getNodes();
   await getEdges();
   await getPaths();
 });
+
 
 // Get Methods
 
@@ -111,8 +113,19 @@ function getCustomerName(id, type) {
 
 function getCourierName(id) {
   const courier = couriers.value.find(c => c.id === id);
-  return courier ? courier.name : '';
+  if (courier) {
+    // If the courier object is a user, return the user's name
+    if (courier.courierNumber === undefined) {
+      return courier.name;
+    } else {
+      // If the courier object is a courier, return the courier's name
+      return courier.name;
+    }
+  } else {
+    return '';
+  }
 }
+
 
 async function getDeliveryCustomers() {
     try {
@@ -133,13 +146,29 @@ async function getPickupCustomers() {
 }
 
 async function getCouriers() {
-    try {
-    const response = await CourierServices.getCouriers();
-    couriers.value = response.data;
+  try {
+    const couriersResponse = await CourierServices.getCouriers();
+    const courierUsersResponse = await UserServices.getCourierUsers();
+
+    const couriers = couriersResponse.data.map((courier) => ({
+      id: courier.id,
+      name: courier.name,
+      courierNumber: courier.courierNumber,
+    }));
+
+    const courierUsers = courierUsersResponse.data.map((user) => ({
+      id: user.id,
+      name: `${user.firstName} ${user.lastName}`,
+      courierNumber: user.id.toString(), 
+    }));
+
+    return [...couriers, ...courierUsers];
   } catch (error) {
     console.log(error);
+    return [];
   }
 }
+
 
 async function getOrders() {
     try {
@@ -261,8 +290,16 @@ function closeEditCourier() {
 
 async function updateCourier() {
   try {
-    const response = await CourierServices.updateCourier(selectedCourier.value);
-    console.log(response); 
+    const isUserCourier = isNaN(selectedCourier.value.courierNumber);
+    let response;
+
+    if (isUserCourier) {
+      response = await UserServices.updateUser(selectedCourier.value);
+    } else {
+      response = await CourierServices.updateCourier(selectedCourier.value);
+    }
+
+    console.log(response);
     if (response.data && Array.isArray(response.data)) {
       const updatedCourierIndex = response.data.findIndex(
         (c) => c.id === selectedCourier.value.id
@@ -287,6 +324,7 @@ async function updateCourier() {
     };
   }
 }
+
 
 
 async function deleteCourier(id) {
@@ -559,7 +597,11 @@ async function deleteCustomer(customer) {
 async function addOrder() {
   isAddOrder.value = false;
   delete newOrder.value.id;
-  //console.log(newOrder.value);
+
+  // if the courierId is an object, extract the id from it
+  if (newOrder.value.courierId && typeof newOrder.value.courierId === 'object') {
+    newOrder.value.courierId = newOrder.value.courierId.id;
+  }
   let pickupLocation = "";
   let deliveryLocation = "";
   for (let i = 0; i < pickupCustomers.value.length; i++) {
@@ -696,6 +738,10 @@ function closeEditOrder() {
 }
 
 async function updateOrder(order) {
+  // if the courierId is an object, extract the id from it
+  if (order.courierId && typeof order.courierId === 'object') {
+    order.courierId = order.courierId.id;
+  }
   try {
     console.log(order);
     const response = await OrderServices.updateOrder(order);
@@ -887,31 +933,32 @@ function dijkstra(graph, startNode, endNode) {
 </v-list>
 
     
-    <v-row>
-      <v-col cols="4">
-        <div class="courier-container" style="background-color: darkgreen; border-radius: 15px; margin-bottom: 18px;">
-          <h2 style="text-align: center; color: white;">Couriers</h2>
-          <div class="icon">
-            <v-icon size="x-small" @click="openAddCourier()">
-              mdi-plus
-            </v-icon>
-          </div>
-        </div>
+<v-row>
+  <v-col cols="4">
+    <div class="courier-container" style="background-color: darkgreen; border-radius: 15px; margin-bottom: 18px;">
+      <h2 style="text-align: center; color: white;">Couriers</h2>
+      <div class="icon">
+        <v-icon size="x-small" @click="openAddCourier()">
+          mdi-plus
+        </v-icon>
+      </div>
+    </div>
 
-        <v-list>
-  <v-list-item v-for="courier in couriers" :key="courier.id" class="courier-item">
-    <v-list-item-content class="d-flex justify-space-between align-center">
-      <div>
-        <v-chip small color="purple">{{ courier.name }}</v-chip>
-        <v-chip small color="red">{{ courier.courierNumber }}</v-chip>
-      </div>
-      <div>
-        <v-icon size="x-small" @click="openEditCourier(courier)">mdi-pencil</v-icon>
-        <v-icon size="x-small" @click="deleteCourier(courier.id)">mdi-trash-can</v-icon>
-      </div>
-    </v-list-item-content>
-  </v-list-item>
-</v-list>
+    <v-list>
+      <v-list-item v-for="courier in couriers" :key="courier.id" class="courier-item">
+        <v-list-item-content class="d-flex justify-space-between align-center">
+          <div>
+            <v-chip small color="purple">{{ courier.name }}</v-chip>
+            <v-chip small color="red">{{ courier.courierNumber }}</v-chip>
+          </div>
+          <div>
+            <v-icon size="x-small" @click="openEditCourier(courier)">mdi-pencil</v-icon>
+            <v-icon size="x-small" @click="deleteCourier(courier.id)">mdi-trash-can</v-icon>
+          </div>
+        </v-list-item-content>
+      </v-list-item>
+    </v-list>
+
 <div class="clerk-container" style="background-color: darkgreen; border-radius: 15px; margin-bottom: 18px;">
   <h2 style="text-align: center; color: white;">Clerks</h2>
   <div class="icon">

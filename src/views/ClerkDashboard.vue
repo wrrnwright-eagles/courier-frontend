@@ -9,6 +9,7 @@ import ClerkServices from "../services/ClerkServices.js";
 import NodeServices from "../services/NodeServices.js";
 import EdgeServices from "../services/EdgeServices.js";
 import courierImage from '../courier.png';
+import UserServices from "../services/UserServices.js";
 
 const route = useRoute();
 const snackbar = ref({
@@ -53,8 +54,8 @@ const newOrder = ref({
 onMounted(async () => {
   await getPickupCustomers();
   await getDeliveryCustomers();
-  await getCouriers();
   await getOrders();
+  couriers.value = await getCouriers();  
 });
 
 function getCustomerName(id, type) {
@@ -87,11 +88,26 @@ async function getPickupCustomers() {
 }
 
 async function getCouriers() {
-    try {
-    const response = await CourierServices.getCouriers();
-    couriers.value = response.data;
+  try {
+    const couriersResponse = await CourierServices.getCouriers();
+    const courierUsersResponse = await UserServices.getCourierUsers();
+
+    const couriers = couriersResponse.data.map((courier) => ({
+      id: courier.id,
+      name: courier.name,
+      courierNumber: courier.courierNumber,
+    }));
+
+    const courierUsers = courierUsersResponse.data.map((user) => ({
+      id: user.id,
+      name: `${user.firstName} ${user.lastName}`,
+      courierNumber: user.id.toString(), 
+    }));
+
+    return [...couriers, ...courierUsers];
   } catch (error) {
     console.log(error);
+    return [];
   }
 }
 
@@ -468,8 +484,8 @@ function dijkstra(graph, startNode, endNode) {
   {{ snackbar.text }}
 </v-snackbar>
 
- <!-- Edit Order Dialog -->
- <v-dialog v-model="isEditOrder">
+  <!-- Edit Order Dialog -->
+  <v-dialog v-model="isEditOrder">
   <v-card>
     <v-card-title>Edit Order</v-card-title>
     <v-card-text>
