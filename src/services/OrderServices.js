@@ -30,4 +30,9 @@ export default {
   getOrdersForCourier(courierId) {
     return apiClient.get("/orders/courier/" + courierId);
   },
+
+  assignOrderToCourier(orderId, courierId) {
+    return apiClient.put("/orders/" + orderId + "/assign", { courierId: courierId });
+  }
+  
 };
