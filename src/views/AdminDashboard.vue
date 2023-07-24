@@ -220,31 +220,103 @@ async function getPaths() {
   }
 }
 
-async function downloadLast30DaysOrders() {
+
+async function downloadPreviousMonthInvoices() {
   try {
-    const response = await OrderServices.getRecentOrders();
+    const response = await OrderServices.getOrders();
     const orders = response.data;
+
+    // Get previous month
+    const now = new Date();
+    const previousMonth = now.getMonth() === 0 ? 11 : now.getMonth() - 1;
+    const previousYear = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
+
+    // Filter orders from the previous month
+    const previousMonthOrders = orders.filter(order => {
+      const orderDate = new Date(order.date);
+      return orderDate.getMonth() === previousMonth && orderDate.getFullYear() === previousYear;
+    });
+
+    if (previousMonthOrders.length === 0) {
+      console.log("No orders found for the previous month.");
+      return;
+    }
+
     const doc = new jsPDF();
-    doc.text("Orders from last 30 days", 10, 10);
     let y = 20;
-    for (const order of orders) {
+
+    // Custom header
+    doc.setFontSize(22);
+    doc.text("Courier Business", 105, 10, { align: "center" });
+    doc.setFontSize(12);
+    doc.text(`Invoice Period: ${getPreviousMonthPeriod()}`, 105, 26, { align: "center" });
+
+    // Sort orders by DeliveryCustomer
+    previousMonthOrders.sort((a, b) => a.deliveryCustomerId - b.deliveryCustomerId);
+
+    // Section heading for customer invoices
+    doc.setFontSize(16);
+    const sectionHeading = "Customer Invoices";
+    const sectionHeadingWidth = doc.getStringUnitWidth(sectionHeading) * doc.internal.getFontSize() / doc.internal.scaleFactor;
+    doc.text(sectionHeading, (doc.internal.pageSize.getWidth() - sectionHeadingWidth) / 2, y);
+    y += 20; // Adjusted to 20 pixels spacing
+
+    // Add line above the first customer
+    doc.setLineWidth(0.5);
+    doc.line(10, y - 5, doc.internal.pageSize.getWidth() - 10, y - 5);
+
+    let prevCustomerID = null;
+    for (const order of previousMonthOrders) {
+      if (prevCustomerID !== null && order.deliveryCustomerId !== prevCustomerID) {
+        // Add a line between each DeliveryCustomer
+        doc.setLineWidth(0.5);
+        doc.line(10, y - 5, doc.internal.pageSize.getWidth() - 10, y - 5);
+        y += 10; // Additional spacing after the line
+      }
+
       const date = new Date(order.date);
       const formattedDate = `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
       const customerName = await getCustomerName(order.deliveryCustomerId, 'delivery');
       const line = `Order ID: ${order.id}, Date: ${formattedDate}, Price: $${order.price}, Customer: ${customerName}`;
       doc.text(line, 10, y);
-      y += 10; 
+      y += 10;
+
+      prevCustomerID = order.deliveryCustomerId;
+
+      // Check if content exceeds the page height
+      if (y > doc.internal.pageSize.getHeight() - 10) {
+        doc.addPage();
+        y = 20; // Reset y position for the new page
+      }
     }
-    doc.save("last-30-days-orders.pdf");
+
+    // Add line below the last customer
+    doc.setLineWidth(0.5);
+    doc.line(10, y - 5, doc.internal.pageSize.getWidth() - 10, y - 5);
+
+    doc.save("previous-month-invoices.pdf");
   } catch (error) {
-    console.log(error);
+    console.error("Error while generating invoices:", error);
     snackbar.value = {
       value: true,
       color: "error",
-      text: "Failed to download orders!"
+      text: "Failed to download invoices!"
     };
   }
 }
+
+
+
+function getPreviousMonthPeriod() {
+  const now = new Date();
+  const previousMonth = now.getMonth() === 0 ? 11 : now.getMonth() - 1;
+  const previousMonthName = new Intl.DateTimeFormat('en', { month: 'long' }).format(new Date(now.getFullYear(), previousMonth));
+  const startDate = new Date(now.getFullYear(), previousMonth, 1);
+  const endDate = new Date(now.getFullYear(), previousMonth + 1, 0);
+
+  return `${previousMonthName} ${startDate.getDate()}-${endDate.getDate()}, ${now.getFullYear()}`;
+}
+
 
 
 async function addCourier() {
@@ -857,9 +929,10 @@ function dijkstra(graph, startNode, endNode) {
               </v-icon>
             </div>
             <div class="bill-container rounded" style="background-color: rgb(49, 117, 80);">
-              <v-btn color="transparent" @click="downloadLast30DaysOrders()" style="color: white;">
-                <h2>Billing</h2>
-              </v-btn>
+              <v-btn color="transparent" @click="downloadPreviousMonthInvoices()" style="color: white;">
+  <h2>Billing</h2>
+</v-btn>
+
             </div>
           </v-row>
         </div>
