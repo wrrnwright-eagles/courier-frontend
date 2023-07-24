@@ -579,10 +579,10 @@ async function deleteCustomer(customer) {
   }
 }
 }
-
 async function addOrder() {
   isAddOrder.value = false;
   delete newOrder.value.id;
+// if the courierId is an object, extract the id from it
 if (newOrder.value.courierId && typeof newOrder.value.courierId === 'object' && newOrder.value.courierId.id) {
   newOrder.value.courierId = newOrder.value.courierId.id;
 }
@@ -614,11 +614,9 @@ if (newOrder.value.courierId && typeof newOrder.value.courierId === 'object' && 
     const weight = edges.value[i].weight;
     edgeTable.push({ fromNode, toNode, weight });
   }
-
   const graph = createGraph(nodeTable, edgeTable);
 
   //const { distances, previous, path, visitedNodes } = dijkstra(graph, pickupLocation, deliveryLocation);
-
   const route1 = dijkstra(graph, officeNode, pickupLocation);
   const route2 = dijkstra(graph, pickupLocation, deliveryLocation);
   const route3 = dijkstra(graph, deliveryLocation, officeNode);
@@ -644,35 +642,18 @@ if (newOrder.value.courierId && typeof newOrder.value.courierId === 'object' && 
   const visitedNodes = [...visitedNodes1, ...visitedNodes2, ...visitedNodes3];
 
   var lastPath = undefined;
-
-  
   try {
     newPath.value.path = path.join(',');
     //console.log(newPath.value);
     await PathServices.addPath(newPath.value);
     await getPaths();
     lastPath = paths.value.length - 1;
-    //console.log(lastPath);
-    //console.log(paths.value[lastPath].id);
-    
   } catch (error) {
     console.log(error);
   }
-
-  //console.log('Combined Results:');
-  //console.log('Distances:', distances);
-  //console.log('Previous Nodes:', previous);
-  //console.log('Shortest Path:', path.join(' -> '));
-  //console.log('Visited Nodes:', visitedNodes);
-
-  newOrder.value.pathId = paths.value[lastPath].id;
+  ///newOrder.value.pathId = paths.value[lastPath].id;
   newOrder.value.blocks = (visitedNodes.length - 1);
   newOrder.value.price = ((1.5 * (visitedNodes.length - 1)) + 5);
-
-  //console.log("pathId = " + newOrder.value.pathId);
-  //console.log("blocks = " + newOrder.value.blocks);
-  //console.log("price = $" + newOrder.value.price);
-
   try {
     console.log('Order to be sent: ', newOrder.value);
 await OrderServices.addOrder(newOrder.value);
@@ -1027,7 +1008,6 @@ function dijkstra(graph, startNode, endNode) {
   {{ snackbar.text }}
 </v-snackbar>
 
-<!-- Add Order Dialog -->
 <v-dialog v-model="isAddOrder">
   <v-card>
     <v-card-title>Add Order</v-card-title>
