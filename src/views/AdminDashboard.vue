@@ -26,6 +26,8 @@ const selectedCourier = ref({
   courierNumber: "",
   name: "",
 });
+const dialog = ref(false);
+const selectedMonth = ref(null);
 const isAddCourier = ref(false);
 const isEditCourier = ref(false);
 const deliveryCustomers = ref([]);
@@ -220,25 +222,26 @@ async function getPaths() {
   }
 }
 
+async function fetchInvoicesForSelectedMonth() {
+  dialog.value = false; // close dialog
 
-async function downloadPreviousMonthInvoices() {
   try {
     const response = await OrderServices.getOrders();
     const orders = response.data;
 
-    // Get previous month
+    // Get the selected month
     const now = new Date();
-    const previousMonth = now.getMonth() === 0 ? 11 : now.getMonth() - 1;
-    const previousYear = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
+    const selectedMonthNumber = now.getMonth() - selectedMonth.value;
+    const selectedYear = selectedMonthNumber < 0 ? now.getFullYear() - 1 : now.getFullYear();
 
-    // Filter orders from the previous month
-    const previousMonthOrders = orders.filter(order => {
+    // Filter orders from the selected month
+    const selectedMonthOrders = orders.filter(order => {
       const orderDate = new Date(order.date);
-      return orderDate.getMonth() === previousMonth && orderDate.getFullYear() === previousYear;
+      return orderDate.getMonth() === selectedMonthNumber && orderDate.getFullYear() === selectedYear;
     });
 
-    if (previousMonthOrders.length === 0) {
-      console.log("No orders found for the previous month.");
+    if (selectedMonthOrders.length === 0) {
+      console.log(`No orders found for the selected month.`);
       return;
     }
 
@@ -248,10 +251,9 @@ async function downloadPreviousMonthInvoices() {
     doc.setFontSize(22);
     doc.text("Courier Business", 105, 10, { align: "center" });
     doc.setFontSize(12);
-    doc.text(`Invoice Period: ${getPreviousMonthPeriod()}`, 105, 26, { align: "center" });
+    doc.text(`Invoice Period: ${getSelectedMonthPeriod(selectedMonth.value)}`, 105, 26, { align: "center" });
 
-  
-    previousMonthOrders.sort((a, b) => a.deliveryCustomerId - b.deliveryCustomerId);
+    selectedMonthOrders.sort((a, b) => a.deliveryCustomerId - b.deliveryCustomerId);
     doc.setFontSize(16);
     const sectionHeading = "Customer Invoices";
     const sectionHeadingWidth = doc.getStringUnitWidth(sectionHeading) * doc.internal.getFontSize() / doc.internal.scaleFactor;
@@ -261,7 +263,7 @@ async function downloadPreviousMonthInvoices() {
     doc.line(10, y - 5, doc.internal.pageSize.getWidth() - 10, y - 5);
 
     let prevCustomerID = null;
-    for (const order of previousMonthOrders) {
+    for (const order of selectedMonthOrders) {
       if (prevCustomerID !== null && order.deliveryCustomerId !== prevCustomerID) {
         doc.setLineWidth(0.5);
         doc.line(10, y - 5, doc.internal.pageSize.getWidth() - 10, y - 5);
@@ -286,9 +288,9 @@ async function downloadPreviousMonthInvoices() {
     doc.setLineWidth(0.5);
     doc.line(10, y - 5, doc.internal.pageSize.getWidth() - 10, y - 5);
 
-    doc.save("previous-month-invoices.pdf");
-  } catch (error) {
-    console.error("Error while generating invoices:", error);
+    doc.save("selected-month-invoices.pdf");
+  } catch(error) {
+    console.error(error);
     snackbar.value = {
       value: true,
       color: "error",
@@ -299,15 +301,17 @@ async function downloadPreviousMonthInvoices() {
 
 
 
-function getPreviousMonthPeriod() {
+function getSelectedMonthPeriod(selectedMonthNumber) {
   const now = new Date();
-  const previousMonth = now.getMonth() === 0 ? 11 : now.getMonth() - 1;
-  const previousMonthName = new Intl.DateTimeFormat('en', { month: 'long' }).format(new Date(now.getFullYear(), previousMonth));
-  const startDate = new Date(now.getFullYear(), previousMonth, 1);
-  const endDate = new Date(now.getFullYear(), previousMonth + 1, 0);
+  const selectedMonth = now.getMonth() - selectedMonthNumber;
+  const selectedYear = selectedMonth < 0 ? now.getFullYear() - 1 : now.getFullYear();
+  const selectedMonthName = new Intl.DateTimeFormat('en', { month: 'long' }).format(new Date(selectedYear, selectedMonth));
+  const startDate = new Date(selectedYear, selectedMonth, 1);
+  const endDate = new Date(selectedYear, selectedMonth + 1, 0);
 
-  return `${previousMonthName} ${startDate.getDate()}-${endDate.getDate()}, ${now.getFullYear()}`;
+  return `${selectedMonthName} ${startDate.getDate()}-${endDate.getDate()}, ${selectedYear}`;
 }
+
 
 
 
@@ -921,10 +925,9 @@ function dijkstra(graph, startNode, endNode) {
               </v-icon>
             </div>
             <div class="bill-container rounded" style="background-color: rgb(49, 117, 80);">
-              <v-btn color="transparent" @click="downloadPreviousMonthInvoices()" style="color: white;">
+              <v-btn color="transparent" @click="dialog = true" style="color: white;">
   <h2>Billing</h2>
 </v-btn>
-
             </div>
           </v-row>
         </div>
@@ -1177,6 +1180,27 @@ function dijkstra(graph, startNode, endNode) {
   </div>
 </div>
 
+<!-- Billing Dialog -->
+<v-dialog v-model="dialog" persistent max-width="600px">
+  <v-card>
+    <v-card-title class="text-h5">Choose Month</v-card-title>
+    <v-card-text>
+      <v-radio-group v-model="selectedMonth">
+        <v-radio label="Last Month" value="1"></v-radio>
+        <v-radio label="2 Months Ago" value="2"></v-radio>
+        <v-radio label="3 Months Ago" value="3"></v-radio>
+      </v-radio-group>
+    </v-card-text>
+    <v-card-actions>
+  <v-spacer></v-spacer>
+  <v-btn color="red" text @click="dialog.value = false">Close</v-btn>
+  <v-btn color="green" text @click="fetchInvoicesForSelectedMonth">Download Invoices</v-btn>
+</v-card-actions>
+
+  </v-card>
+</v-dialog>
+
+
 
 <v-row>
   <v-col cols="6">
@@ -1320,7 +1344,7 @@ function dijkstra(graph, startNode, endNode) {
 }
 .clerk-container {
   padding: 10px;
-  margin-top: 80px;
+  margin-top: 40px;
   border-radius: 18px;
 }  
 
