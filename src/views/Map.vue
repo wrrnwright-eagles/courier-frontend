@@ -6,7 +6,8 @@ import OrderServices from "../services/OrderServices.js";
 
 const route = useRoute();
 
-const orders = ref([]);
+const myOrders = ref([]); // new ref for my orders
+const allOrders = ref([]); // new ref for all orders
 const selectedOrder = ref({});
 const pathSteps = ref([]);
 const path = ref([]);
@@ -20,12 +21,19 @@ onMounted(async () => {
 async function getOrders() {
   try {
     const response = await OrderServices.getOrders(route.params.id);
-    console.log(response.data);
-    orders.value = response.data;
+    const courierId = window.localStorage.getItem("courierId");
+    myOrders.value = response.data.filter(order => order.courierId == courierId);
+    allOrders.value = response.data.filter(order => order.courierId == null || order.courierId != courierId);
+
+
+    myOrders.value.forEach(order => {
+      if (order.isDeliveredOnTime) { 
+        bonus.value++;
+      }
+    });
   } catch (error) {
     console.log(error);
   }
-
 }
 
 async function getPaths() {
@@ -63,7 +71,7 @@ function matchPathToOrder(selectedOrder) {
     </div>
     <div class="text-section">
       <div class="order-selection">
-        <v-select label="Order" v-model="selectedOrder" :items="orders" 
+        <v-select label="Order" v-model="selectedOrder" :items="myOrders" 
           item-title="id" return-object required/>
       </div>
       <div>
