@@ -30,6 +30,17 @@ function logout() {
   user.value = null;
   router.push({ name: "login" });
 }
+
+function handleProfilePictureUpload(event) {
+    const file = event.target.files[0];
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      user.value.profilePicture = e.target.result;
+      // Assuming you have a service to update the user's profile picture,
+      // you can call it here, passing the 'user' object
+    };
+    reader.readAsDataURL(file);
+  }
 </script>
 
 <template>
@@ -52,30 +63,29 @@ function logout() {
         Dashboard
       </v-btn>
       <v-menu v-if="user !== null" min-width="200px" rounded>
-        <template v-slot:activator="{ props }">
-          <v-btn icon v-bind="props">
-            <v-avatar class="mx-auto text-center" color="green" size="large">
-              <span class="white--text font-weight-bold">{{
-                `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`
-              }}</span>
+      <template v-slot:activator="{ props }">
+        <v-btn icon v-bind="props">
+          <v-avatar class="mx-auto text-center" color="green" size="large">
+            <span class="white--text font-weight-bold">{{ user.profilePicture ? '' : `${user.firstName.charAt(0)}${user.lastName.charAt(0)}` }}</span>
+            <img v-if="user.profilePicture" :src="user.profilePicture" alt="Profile Picture" />
+          </v-avatar>
+        </v-btn>
+      </template>
+      <v-card>
+        <v-card-text>
+          <div class="mx-auto text-center">
+            <v-avatar color="green">
+              <span class="white--text text-h5">{{ user.profilePicture ? '' : `${user.firstName.charAt(0)}${user.lastName.charAt(0)}` }}</span>
+              <img v-if="user.profilePicture" :src="user.profilePicture" alt="Profile Picture" />
             </v-avatar>
-          </v-btn>
-        </template>
-        <v-card>
-          <v-card-text>
-            <div class="mx-auto text-center">
-              <v-avatar color="green">
-                <span class="white--text text-h5">{{
-                  `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`
-                }}</span>
-              </v-avatar>
-              <h3>{{ `${user.firstName} ${user.lastName}` }}</h3>
-              <p class="text-caption mt-1">
-                {{ user.email }}
-              </p>
-              <v-divider class="my-3"></v-divider>
-              <v-btn rounded variant="text" @click="logout()"> Logout </v-btn>
-            </div>
+            <h3>{{ `${user.firstName} ${user.lastName}` }}</h3>
+            <p class="text-caption mt-1">
+              {{ user.email }}
+            </p>
+            <input type="file" @change="handleProfilePictureUpload" accept="image/*" />
+            <v-divider class="my-3"></v-divider>
+            <v-btn rounded variant="text" @click="logout()">Logout</v-btn>
+          </div>
           </v-card-text>
         </v-card>
       </v-menu>
