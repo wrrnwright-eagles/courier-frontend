@@ -26,9 +26,21 @@ function logout() {
       console.log(error);
     });
   localStorage.removeItem("user");
+  window.localStorage.removeItem("courierId");
   user.value = null;
   router.push({ name: "login" });
 }
+
+function handleProfilePictureUpload(event) {
+    const file = event.target.files[0];
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      user.value.profilePicture = e.target.result;
+      // Assuming you have a service to update the user's profile picture,
+      // you can call it here, passing the 'user' object
+    };
+    reader.readAsDataURL(file);
+  }
 </script>
 
 <template>
