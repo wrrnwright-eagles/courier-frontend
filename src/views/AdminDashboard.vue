@@ -245,33 +245,27 @@ async function downloadPreviousMonthInvoices() {
     const doc = new jsPDF();
     let y = 20;
 
-    // Custom header
     doc.setFontSize(22);
     doc.text("Courier Business", 105, 10, { align: "center" });
     doc.setFontSize(12);
     doc.text(`Invoice Period: ${getPreviousMonthPeriod()}`, 105, 26, { align: "center" });
 
-    // Sort orders by DeliveryCustomer
+  
     previousMonthOrders.sort((a, b) => a.deliveryCustomerId - b.deliveryCustomerId);
-
-    // Section heading for customer invoices
     doc.setFontSize(16);
     const sectionHeading = "Customer Invoices";
     const sectionHeadingWidth = doc.getStringUnitWidth(sectionHeading) * doc.internal.getFontSize() / doc.internal.scaleFactor;
     doc.text(sectionHeading, (doc.internal.pageSize.getWidth() - sectionHeadingWidth) / 2, y);
-    y += 20; // Adjusted to 20 pixels spacing
-
-    // Add line above the first customer
+    y += 20; 
     doc.setLineWidth(0.5);
     doc.line(10, y - 5, doc.internal.pageSize.getWidth() - 10, y - 5);
 
     let prevCustomerID = null;
     for (const order of previousMonthOrders) {
       if (prevCustomerID !== null && order.deliveryCustomerId !== prevCustomerID) {
-        // Add a line between each DeliveryCustomer
         doc.setLineWidth(0.5);
         doc.line(10, y - 5, doc.internal.pageSize.getWidth() - 10, y - 5);
-        y += 10; // Additional spacing after the line
+        y += 10; 
       }
 
       const date = new Date(order.date);
@@ -283,14 +277,12 @@ async function downloadPreviousMonthInvoices() {
 
       prevCustomerID = order.deliveryCustomerId;
 
-      // Check if content exceeds the page height
       if (y > doc.internal.pageSize.getHeight() - 10) {
         doc.addPage();
-        y = 20; // Reset y position for the new page
+        y = 20; 
       }
     }
 
-    // Add line below the last customer
     doc.setLineWidth(0.5);
     doc.line(10, y - 5, doc.internal.pageSize.getWidth() - 10, y - 5);
 

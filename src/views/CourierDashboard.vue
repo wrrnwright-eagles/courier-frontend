@@ -108,13 +108,9 @@ async function getOrders() {
     myOrders.value = response.data.filter(order => order.courierId == courierId);
     allOrders.value = response.data.filter(order => order.courierId == null || order.courierId != courierId);
 
-    // Add logging
-    console.log('My Orders:', myOrders.value);
-    console.log('All Orders:', allOrders.value);
 
-    // Calculate bonus
     myOrders.value.forEach(order => {
-      if (order.isDeliveredOnTime) { // assuming we have isDeliveredOnTime field
+      if (order.isDeliveredOnTime) { 
         bonus.value++;
       }
     });
@@ -130,7 +126,6 @@ watch(dialog, async (newVal) => {
       const courierId = window.localStorage.getItem("courierId");
       const response = await OrderServices.assignOrderToCourier(selectedOrderId.value, courierId);
       getOrders();
-      console.log('Orders fetched after update:', myOrders.value, allOrders.value);
     } catch (error) {
       console.log(error);
     }

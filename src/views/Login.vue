@@ -123,7 +123,7 @@ async function forgotPassword() {
         <v-card-title class="headline mb-2">Login</v-card-title>
         <v-card-text>
           <v-text-field v-model="user.email" label="Email" required></v-text-field>
-          <v-text-field v-model="user.password" label="Password" required></v-text-field>
+          <v-text-field v-model="user.password" label="Password" type="password" required></v-text-field>
         </v-card-text>
         <v-card-actions>
           <v-btn variant="flat" color="secondary" @click="openCreateAccount()">Create Account</v-btn>
@@ -141,7 +141,7 @@ async function forgotPassword() {
             <v-text-field v-model="user.firstName" label="First Name" required></v-text-field>
             <v-text-field v-model="user.lastName" label="Last Name" required></v-text-field>
             <v-text-field v-model="user.email" label="Email" required></v-text-field>
-            <v-text-field v-model="user.password" label="Password" required></v-text-field>
+            <v-text-field v-model="user.password" label="Password" type="password" required></v-text-field>
           </v-card-text>
           <v-card-actions>
             <v-spacer></v-spacer>
