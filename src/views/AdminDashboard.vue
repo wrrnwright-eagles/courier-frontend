@@ -1193,7 +1193,7 @@ function dijkstra(graph, startNode, endNode) {
     </v-card-text>
     <v-card-actions>
   <v-spacer></v-spacer>
-  <v-btn color="red" text @click="dialog.value = false">Close</v-btn>
+  <v-btn color="red" text @click="dialog = false">Close</v-btn>
   <v-btn color="green" text @click="fetchInvoicesForSelectedMonth">Download Invoices</v-btn>
 </v-card-actions>
 
