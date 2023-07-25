@@ -719,7 +719,7 @@ if (newOrder.value.courierId && typeof newOrder.value.courierId === 'object' && 
   } catch (error) {
     console.log(error);
   }
-  ///newOrder.value.pathId = paths.value[lastPath].id;
+  newOrder.value.pathId = paths.value[lastPath].id;
   newOrder.value.blocks = (visitedNodes.length - 1);
   newOrder.value.price = ((1.5 * (visitedNodes.length - 1)) + 5);
   try {
