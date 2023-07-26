@@ -3,6 +3,7 @@ import { onMounted, ref } from "vue";
 import { useRoute } from "vue-router";
 import PathServices from "../services/PathServices.js";
 import OrderServices from "../services/OrderServices.js";
+import NodeServices from "../services/NodeServices.js";
 
 const route = useRoute();
 
@@ -11,10 +12,13 @@ const allOrders = ref([]); // new ref for all orders
 const selectedOrder = ref({});
 const pathSteps = ref([]);
 const path = ref([]);
+const nodes = ref([]);
+const streetNames = ref([]);
 
 onMounted(async () => {
   await getOrders();
   await getPaths();
+  await getNodes();
 });
 
 
@@ -46,6 +50,16 @@ async function getPaths() {
   }
 
 }
+async function getNodes() {
+  try {
+    const response = await NodeServices.getNodes(route.params.id);
+    console.log(response.data);
+    nodes.value = response.data;
+  } catch (error) {
+    console.log(error);
+  }
+
+}
 
 function matchPathToOrder(selectedOrder) {
 
@@ -57,6 +71,17 @@ function matchPathToOrder(selectedOrder) {
         //console.log(pathSteps.value[i].path.split(','));
         path.value = pathSteps.value[i].path.split(',');
         //console.log(path);
+      }
+    }
+
+    for (let x = 0; x < path.value.length; x++) {
+      for (let y = 0; y < nodes.value.length; y++) {
+        if (path.value[x] === nodes.value[y].node) {
+          streetNames.value[x] = nodes.value[y].streetName;
+        }
+        if (streetNames.value[x] === streetNames.value[x-1]) {
+          streetNames.value[x] = "Pickup Location";
+        }
       }
     }
 }
@@ -81,7 +106,7 @@ function matchPathToOrder(selectedOrder) {
         <h2>Route Instructions</h2>
         <div>
           <p>Start</p>
-          <v-list-item v-for="(step, index) in path" :key="index" class="path-list">
+          <v-list-item v-for="(step, index) in streetNames" :key="index" class="path-list">
             {{ step }}
           </v-list-item>
           <p>End</p>
