@@ -43,7 +43,7 @@ async function getOrders() {
 async function getPaths() {
   try {
     const response = await PathServices.getPaths(route.params.id);
-    console.log(response.data);
+    //console.log(response.data);
     pathSteps.value = response.data;
   } catch (error) {
     console.log(error);
@@ -53,7 +53,7 @@ async function getPaths() {
 async function getNodes() {
   try {
     const response = await NodeServices.getNodes(route.params.id);
-    console.log(response.data);
+    //console.log(response.data);
     nodes.value = response.data;
   } catch (error) {
     console.log(error);
@@ -74,13 +74,20 @@ function matchPathToOrder(selectedOrder) {
       }
     }
 
+    let setDropLocation = false;
+
     for (let x = 0; x < path.value.length; x++) {
       for (let y = 0; y < nodes.value.length; y++) {
         if (path.value[x] === nodes.value[y].node) {
           streetNames.value[x] = nodes.value[y].streetName;
         }
-        if (streetNames.value[x] === streetNames.value[x-1]) {
+        if ((streetNames.value[x] === streetNames.value[x-1]) && (setDropLocation)) {
           streetNames.value[x] = "Pickup Location";
+          setDropLocation = false;
+        }
+        if (streetNames.value[x] === streetNames.value[x-1]) {
+          streetNames.value[x] = "Dropoff Location";
+          setDropLocation = true;
         }
       }
     }
