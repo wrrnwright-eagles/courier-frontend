@@ -115,8 +115,8 @@ function matchPathToOrder(selectedOrder) {
       }
     }
 
-    console.log(pickupOfficeInstructions);
-    console.log(deliveryOfficeInstructions);
+    //console.log(pickupOfficeInstructions);
+    //console.log(deliveryOfficeInstructions);
 
     let setDropLocation = false;
 
