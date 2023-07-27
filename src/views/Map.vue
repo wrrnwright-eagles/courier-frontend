@@ -4,6 +4,8 @@ import { useRoute } from "vue-router";
 import PathServices from "../services/PathServices.js";
 import OrderServices from "../services/OrderServices.js";
 import NodeServices from "../services/NodeServices.js";
+import PickupCustomerServices from "../services/PickupCustomerServices.js";
+import DeliveryCustomerServices from "../services/DeliveryCustomerServices.js";
 
 const route = useRoute();
 
@@ -14,11 +16,15 @@ const pathSteps = ref([]);
 const path = ref([]);
 const nodes = ref([]);
 const streetNames = ref([]);
+const pickupCustomers = ref([]);
+const deliveryCustomers = ref([]);
 
 onMounted(async () => {
   await getOrders();
   await getPaths();
   await getNodes();
+  await getPickupCustomers();
+  await getDeliveryCustomers();
 });
 
 
@@ -61,6 +67,24 @@ async function getNodes() {
 
 }
 
+async function getDeliveryCustomers() {
+    try {
+    const response = await DeliveryCustomerServices.getDeliveryCustomers();
+    deliveryCustomers.value = response.data;
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+async function getPickupCustomers() {
+    try {
+    const response = await PickupCustomerServices.getPickupCustomers();
+    pickupCustomers.value = response.data;
+  } catch (error) {
+    console.log(error);
+  }
+}
+
 function matchPathToOrder(selectedOrder) {
 
   //console.log(selectedOrder.id);
@@ -74,6 +98,26 @@ function matchPathToOrder(selectedOrder) {
       }
     }
 
+    let pickupOfficeInstructions = "";
+    let deliveryOfficeInstructions = "";
+
+
+    for (let a = 0; a < pickupCustomers.value.length; a++) {
+      for (let b = 0; b < deliveryCustomers.value.length; b++) {
+        if (pickupCustomers.value[a].id === selectedOrder.pickupCustomerId) {
+          if (deliveryCustomers.value[b].id === selectedOrder.deliveryCustomerId) {
+            console.log(pickupCustomers.value[a].deliveryInstructions);
+            console.log(deliveryCustomers.value[b].deliveryInstructions);
+            pickupOfficeInstructions += "Arrived at Destination - " + pickupCustomers.value[a].deliveryInstructions;
+            deliveryOfficeInstructions += "Arrived at Destination - " + deliveryCustomers.value[b].deliveryInstructions;
+          }
+        }
+      }
+    }
+
+    console.log(pickupOfficeInstructions);
+    console.log(deliveryOfficeInstructions);
+
     let setDropLocation = false;
 
     for (let x = 0; x < path.value.length; x++) {
@@ -82,11 +126,11 @@ function matchPathToOrder(selectedOrder) {
           streetNames.value[x] = nodes.value[y].streetName;
         }
         if ((streetNames.value[x] === streetNames.value[x-1]) && (setDropLocation)) {
-          streetNames.value[x] = "Pickup Location";
+          streetNames.value[x] = pickupOfficeInstructions;
           setDropLocation = false;
         }
         if (streetNames.value[x] === streetNames.value[x-1]) {
-          streetNames.value[x] = "Dropoff Location";
+          streetNames.value[x] = deliveryOfficeInstructions;
           setDropLocation = true;
         }
       }
