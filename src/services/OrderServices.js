@@ -33,6 +33,9 @@ export default {
 
   assignOrderToCourier(orderId, courierId) {
     return apiClient.put("/orders/" + orderId + "/assign", { courierId: courierId });
+  },
+  completeOrder(orderId) {
+    return apiClient.put("/orders/" + orderId + "/complete");
   }
   
 };

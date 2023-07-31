@@ -1,74 +1,100 @@
-<script setup> 
+<script setup>
 import { onMounted, ref } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import PathServices from "../services/PathServices.js";
 import OrderServices from "../services/OrderServices.js";
 import NodeServices from "../services/NodeServices.js";
 import PickupCustomerServices from "../services/PickupCustomerServices.js";
 import DeliveryCustomerServices from "../services/DeliveryCustomerServices.js";
+import CourierServices from "../services/CourierServices.js";
 
 const route = useRoute();
-
-const myOrders = ref([]); // new ref for my orders
-const allOrders = ref([]); // new ref for all orders
+const router = useRouter();
+const startTime = ref(null);
+const endTime = ref(null);
+const showAlert = ref(false);
+const orderStarted = ref(false);
 const selectedOrder = ref({});
 const pathSteps = ref([]);
 const path = ref([]);
+const showStartButton = ref(true);
 const nodes = ref([]);
 const streetNames = ref([]);
 const pickupCustomers = ref([]);
 const deliveryCustomers = ref([]);
+const couriers = ref([]);
+const snackbar = ref({ show: false, text: '' });
 
 onMounted(async () => {
-  await getOrders();
+  await getOrder(route.params.orderId);
   await getPaths();
   await getNodes();
   await getPickupCustomers();
   await getDeliveryCustomers();
+  await getCouriers();
+
+  matchPathToOrder(selectedOrder.value);
 });
 
-
-async function getOrders() {
+async function getOrder(orderId) {
   try {
-    const response = await OrderServices.getOrders(route.params.id);
-    const courierId = window.localStorage.getItem("courierId");
-    myOrders.value = response.data.filter(order => order.courierId == courierId);
-    allOrders.value = response.data.filter(order => order.courierId == null || order.courierId != courierId);
-
-
-    myOrders.value.forEach(order => {
-      if (order.isDeliveredOnTime) { 
-        bonus.value++;
-      }
-    });
+    const response = await OrderServices.getOrder(orderId);
+    selectedOrder.value = response.data;
   } catch (error) {
     console.log(error);
   }
 }
+function getCustomerName(id, type) {
+  const customers = type === 'pickup' ? pickupCustomers.value : deliveryCustomers.value;
+  const customer = customers.find(c => c.id === id);
+  return customer ? customer.name : '';
+}
+
+async function getCouriers() {
+    try {
+    const response = await CourierServices.getCouriers();
+    couriers.value = response.data;
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+function startOrderWithAlert() {
+  startTime.value = new Date();
+  console.log(`Order started at: ${startTime.value}`);
+  snackbar.value = { show: true, text: 'Order has been started!' };
+  
+  // Hide the snackbar after 3 seconds
+  setTimeout(() => {
+    snackbar.value.show = false;
+  }, 3000);
+  
+  // Hide the start button
+  showStartButton.value = false;
+}
+
+
 
 async function getPaths() {
   try {
     const response = await PathServices.getPaths(route.params.id);
-    //console.log(response.data);
     pathSteps.value = response.data;
   } catch (error) {
     console.log(error);
   }
-
 }
+
 async function getNodes() {
   try {
     const response = await NodeServices.getNodes(route.params.id);
-    //console.log(response.data);
     nodes.value = response.data;
   } catch (error) {
     console.log(error);
   }
-
 }
 
 async function getDeliveryCustomers() {
-    try {
+  try {
     const response = await DeliveryCustomerServices.getDeliveryCustomers();
     deliveryCustomers.value = response.data;
   } catch (error) {
@@ -77,7 +103,7 @@ async function getDeliveryCustomers() {
 }
 
 async function getPickupCustomers() {
-    try {
+  try {
     const response = await PickupCustomerServices.getPickupCustomers();
     pickupCustomers.value = response.data;
   } catch (error) {
@@ -86,91 +112,230 @@ async function getPickupCustomers() {
 }
 
 function matchPathToOrder(selectedOrder) {
-
-  //console.log(selectedOrder.id);
-  //console.log(path.length);
-    for (let i = 0; i < pathSteps.value.length; i++) {
-      if (selectedOrder.pathId === pathSteps.value[i].id) {
-        //console.log(pathSteps.value[i].path);
-        //console.log(pathSteps.value[i].path.split(','));
-        path.value = pathSteps.value[i].path.split(',');
-        //console.log(path);
-      }
+  for (let i = 0; i < pathSteps.value.length; i++) {
+    if (selectedOrder.pathId === pathSteps.value[i].id) {
+      path.value = pathSteps.value[i].path.split(',');
     }
+  }
 
-    let pickupOfficeInstructions = "";
-    let deliveryOfficeInstructions = "";
+  let pickupOfficeInstructions = "";
+  let deliveryOfficeInstructions = "";
 
-
-    for (let a = 0; a < pickupCustomers.value.length; a++) {
-      for (let b = 0; b < deliveryCustomers.value.length; b++) {
-        if (pickupCustomers.value[a].id === selectedOrder.pickupCustomerId) {
-          if (deliveryCustomers.value[b].id === selectedOrder.deliveryCustomerId) {
-            console.log(pickupCustomers.value[a].deliveryInstructions);
-            console.log(deliveryCustomers.value[b].deliveryInstructions);
-            pickupOfficeInstructions += "Arrived at Destination - " + pickupCustomers.value[a].deliveryInstructions;
-            deliveryOfficeInstructions += "Arrived at Destination - " + deliveryCustomers.value[b].deliveryInstructions;
-          }
+  for (let a = 0; a < pickupCustomers.value.length; a++) {
+    for (let b = 0; b < deliveryCustomers.value.length; b++) {
+      if (pickupCustomers.value[a].id === selectedOrder.pickupCustomerId) {
+        if (deliveryCustomers.value[b].id === selectedOrder.deliveryCustomerId) {
+          pickupOfficeInstructions += "Arrived at Destination - " + pickupCustomers.value[a].deliveryInstructions;
+          deliveryOfficeInstructions += "Arrived at Destination - " + deliveryCustomers.value[b].deliveryInstructions;
         }
       }
     }
+  }
 
-    //console.log(pickupOfficeInstructions);
-    //console.log(deliveryOfficeInstructions);
-
-    let setDropLocation = false;
-
-    for (let x = 0; x < path.value.length; x++) {
-      for (let y = 0; y < nodes.value.length; y++) {
-        if (path.value[x] === nodes.value[y].node) {
-          streetNames.value[x] = nodes.value[y].streetName;
-        }
-        if ((streetNames.value[x] === streetNames.value[x-1]) && (setDropLocation)) {
-          streetNames.value[x] = pickupOfficeInstructions;
-          setDropLocation = false;
-        }
-        if (streetNames.value[x] === streetNames.value[x-1]) {
-          streetNames.value[x] = deliveryOfficeInstructions;
-          setDropLocation = true;
-        }
+  for (let x = 0; x < path.value.length; x++) {
+    for (let y = 0; y < nodes.value.length; y++) {
+      if (path.value[x] === nodes.value[y].node) {
+        streetNames.value[x] = nodes.value[y].streetName;
       }
     }
+  }
+
+  streetNames.value.unshift(`Start at: ${streetNames.value[0]}`);
+  streetNames.value.push(`Arrived back at Office: ${streetNames.value[streetNames.value.length - 1]}`);
+}
+
+
+function completeOrder() {
+  endTime.value = new Date();
+  const elapsedTime = (endTime.value - startTime.value) / 60000; // convert ms to minutes
+  console.log(`Order completed at: ${endTime.value}`);
+  console.log(`Total time: ${elapsedTime} minutes`);
+
+  if (elapsedTime <= selectedOrder.blocks * 3) {
+    let bonusCount = localStorage.getItem("bonusCount");
+    bonusCount = bonusCount ? Number(bonusCount) : 0;
+    localStorage.setItem("bonusCount", bonusCount + 1);
+  }
+
+  // Reset start and end times
+  startTime.value = null;
+  endTime.value = null;
+  snackbar.value = {
+    show: true,
+    text: 'Are you sure you want to complete this order? This can not be undone',
+    orderId: route.params.orderId,  // Updated this line
+  };
+}
+
+
+async function confirmCompleteOrder(orderId) {
+  try {
+    await OrderServices.completeOrder(orderId); // make an API call to mark the order as complete
+  } catch (error) {
+    console.error(error);
+  }
+  router.push({ name: 'courierdashboard' });  // Redirect to CourierDashboard
 }
 
 
 </script>
 
 <template>
-    <div class="map-container">
-    <div class="map-section">
-      <img src="/Map.png" alt="Map" class="map-image">
+  <div class="map-container">
+    <div class="order-details-section">
+      <div class="order-details">
+        <v-btn small color="green">Total Blocks: {{ selectedOrder.blocks }}</v-btn>
+        <v-btn small color="red">Price: ${{ selectedOrder.price }}</v-btn>
+        <v-btn small color="purple">Estimated Time: {{ selectedOrder.blocks * 3 }} Minutes</v-btn>
+        <v-btn small color="blue">Pickup Customer: {{ getCustomerName(selectedOrder.pickupCustomerId, 'pickup') }}</v-btn>
+        <v-btn small color="orange">Delivery Customer: {{ getCustomerName(selectedOrder.deliveryCustomerId, 'delivery') }}</v-btn>
+      </div>
     </div>
-    <div class="text-section">
-      <div class="order-selection">
-        <v-select label="Order" v-model="selectedOrder" :items="myOrders" 
-          item-title="id" return-object required/>
+    <div class="content-section">
+      <div class="map-section">
+        <img src="/Map.png" alt="Map" class="map-image">
       </div>
-      <div>
-        <v-btn @click="matchPathToOrder(selectedOrder)">Get Path</v-btn>
-      </div>
-      <div class="text-container">
-        <h2>Route Instructions</h2>
-        <div>
-          <p>Start</p>
+      <div class="text-section">
+        <div class="text-container">
+          <v-btn v-if="showStartButton" @click="startOrderWithAlert" color="green">Start Order</v-btn>
+          <v-snackbar
+  v-model="snackbar.show"
+  :timeout="3000"
+  color="green"
+  top
+>
+  {{ snackbar.text }}
+  <v-btn
+    text
+    color="white"
+    @click="snackbar.show = false"
+  >
+    Close
+  </v-btn>
+</v-snackbar>
+          <h2 class="title">Delivery Instructions</h2>
           <v-list-item v-for="(step, index) in streetNames" :key="index" class="path-list">
             {{ step }}
           </v-list-item>
-          <p>End</p>
         </div>
+        <v-btn @click="completeOrder" color="red">Complete Order</v-btn>
       </div>
     </div>
-  </div>
+<v-snackbar
+  v-model="snackbar.show"
+  :timeout="3000"
+  color="green"
+  top
+>
+  {{ snackbar.text }}
+  <v-btn
+    text
+    color="white"
+    @click="confirmCompleteOrder(snackbar.orderId)"
+  >
+    Yes
+  </v-btn>
+  <v-btn
+    text
+    color="white"
+    @click="snackbar.show = false"
+  >
+    No
+  </v-btn>
+</v-snackbar>
 
+  </div>
 </template>
 
+
+
+
+
 <style>
+.map-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center; 
+}
+
+.content-section {
+  display: flex;
+  flex-direction: row;
+  flex: 1;
+  width: 100%;
+  justify-content: space-between;
+}
+
+.title {
+  text-align: center;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
 .path-list {
   display: flex;
   flex-direction: column;
+}
+
+.order-details-section {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+
+  background-color: transparent;
+  z-index: 2;
+  width: 100%;
+}
+
+.order-details {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  background-color: #f1f1f3;
+  border-radius: 5px;
+  width: 95%;
+}
+
+.order-details v-btn {
+  font-size: 1.5em; 
+  height: auto;
+  padding: 10px 20px; 
+  text-transform: none; 
+}
+
+.map-section {
+  flex: 1;
+  display: flex;
+  margin-top: 11px;
+  flex-direction: column;
+  position: relative;
+  background-color: transparent;
+  align-items: flex-start;
+  padding-left: 20px;
+}
+
+.map-image {
+  width: 100%; 
+  height: auto;
+  object-fit: contain;
+}
+
+.text-section {
+  margin-top: 0px;
+  flex: .5;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding: 20px;
+  padding-left: 10px;
+  align-items: flex-start;
+  padding-right: 10px;
+}
+
+.text-container{
+  align-items: center;
 }
 </style>
