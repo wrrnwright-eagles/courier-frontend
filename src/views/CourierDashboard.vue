@@ -5,12 +5,12 @@ import CourierServices from "../services/CourierServices.js";
 import PickupCustomerServices from "../services/PickupCustomerServices.js";
 import DeliveryCustomerServices from "../services/DeliveryCustomerServices.js";
 import OrderServices from "../services/OrderServices.js"
-import ClerkServices from "../services/ClerkServices.js";
-import NodeServices from "../services/NodeServices.js";
-import EdgeServices from "../services/EdgeServices.js";
-import courierImage from '../courier.png';
 import { watch } from 'vue';
+import { useRouter } from 'vue-router';
+import eventBus from '../EventBus';
 
+const completedOrders = ref([]);
+const router = useRouter();
 const snackbar = ref({
   value: false,
   color: '',
@@ -45,7 +45,14 @@ const newOrder = ref({
 })
 const dialog = ref(false);
 const selectedOrderId = ref(null);
-
+const orderIndex = myOrders.value.findIndex(order => order.id === orderId);
+if (orderIndex !== -1) {
+  // Remove from myOrders
+  const completedOrder = myOrders.value.splice(orderIndex, 1)[0];
+  // Add to completedOrders
+  completedOrders.value.push(completedOrder);
+}
+const orderId = route.params.orderId; 
 
 
 onMounted(async () => {
@@ -54,7 +61,9 @@ onMounted(async () => {
   getDeliveryCustomers();
   getCouriers();
   setInterval(getOrders, 5000); // polling every 5 seconds
-});
+  bonus.value = localStorage.getItem("bonusCount") || 0;
+  });
+
 
 
 function assignOrderToMe(orderId) {
@@ -106,6 +115,7 @@ async function getOrders() {
     const response = await OrderServices.getOrders(route.params.id);
     const courierId = window.localStorage.getItem("courierId");
     myOrders.value = response.data.filter(order => order.courierId == courierId);
+    completedOrders.value = response.data.filter(order => order.courierId == courierId && order.status === 'complete');
     allOrders.value = response.data.filter(order => order.courierId == null || order.courierId != courierId);
 
 
@@ -118,6 +128,47 @@ async function getOrders() {
     console.log(error);
   }
 }
+
+async function completeOrder(orderId) {
+  try {
+    // Call the backend to mark the order as complete
+    await OrderServices.completeOrder(orderId);
+
+    // Find the completed order in myOrders
+    const orderIndex = myOrders.value.findIndex(order => order.id === orderId);
+    if (orderIndex !== -1) {
+      // Remove from myOrders and get the completed order
+      const completedOrder = myOrders.value.splice(orderIndex, 1)[0];
+
+      // Find the completed order in allOrders
+      const completedOrderIndex = allOrders.value.findIndex(order => order.id === orderId);
+      if (completedOrderIndex !== -1) {
+        // Remove from allOrders
+        allOrders.value.splice(completedOrderIndex, 1);
+      }
+
+      // Add to completedOrders
+      completedOrders.value.push(completedOrder);
+    }
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+function moveOrderToCompleted(orderId) {
+  // Find the order in allOrders
+  const orderIndex = allOrders.value.findIndex(o => o.id === orderId);
+
+  if (orderIndex !== -1) {
+    // Remove from allOrders
+    const completedOrder = allOrders.value.splice(orderIndex, 1)[0];
+    // Add to completedOrders
+    completedOrders.value.push(completedOrder);
+  }
+}
+
+
+
 
 
 watch(dialog, async (newVal) => {
@@ -134,6 +185,11 @@ watch(dialog, async (newVal) => {
 });
 
 
+
+
+eventBus.on('orderCompleted', (orderId) => {
+  moveOrderToCompleted(orderId);
+});
 </script>
 
 <template>
@@ -162,7 +218,7 @@ watch(dialog, async (newVal) => {
 
     <v-row>
       <v-col cols="14">
-        <div class="order-container rounded">
+        <div class="order-container">
           <h2 class="order-title">My Orders</h2>
           <v-list class="order-list">
   <div v-for="order in myOrders" :key="order.id">
@@ -189,7 +245,7 @@ watch(dialog, async (newVal) => {
   </div>
 </v-list>
         </div>
-        <div class="order-container rounded">
+        <div class="order-container">
           <h2 class="order-title">All Orders</h2>
           <v-list class="order-list">
   <div v-for="order in allOrders" :key="order.id">
@@ -218,7 +274,37 @@ watch(dialog, async (newVal) => {
         </div>
       </v-col>
     </v-row>
+    <div class="order-container">
+    <v-col cols="14"></v-col>
+    <h2 class="order-title">Completed</h2>
+    <v-list class="order-list">
+      <div v-for="order in completedOrders" :key="order.id">
+        <v-list-item>
+          <v-list-item-content>
+          <div class="d-flex justify-space-between align-center">
+            <div>
+              <h4 class="mb-1">{{ getCustomerName(order.pickupCustomerId, 'pickup') }} &#x2794; {{ getCustomerName(order.deliveryCustomerId, 'delivery') }}</h4>
+              <div class="mb-2">
+                <v-chip small color="green">{{ order.blocks }} Blocks</v-chip>
+                <v-chip small color="blue">{{ getCourierName(order.courierId) }}</v-chip>
+                <v-chip small color="red">Price: ${{ order.price }}</v-chip>
+                <v-chip small color="purple">Estimated Time: {{ order.blocks * 3 }} Minutes</v-chip>
+              </div>
+              <div class="mb-1">{{ order.date }}, {{ order.time }}</div>
+            </div>
+            <div class="actions">
+              <v-btn color="green" disabled>Completed</v-btn>
+            </div>
+          </div>
+        </v-list-item-content>
+        </v-list-item>
+        <v-divider></v-divider>
+      </div>
+    </v-list>
+  </div>
   </v-container>
+ 
+
 </template>
 
 
