@@ -333,7 +333,7 @@ async function updateOrder(order) {
 }
 
 async function deleteOrder(id) {
-  const confirmDialog = confirm("Are you sure you want to delete this order?");
+  const confirmDialog = confirm("Are you sure you want to Delete this order?");
   if (confirmDialog) {
     try {
       await OrderServices.deleteOrder(id);
@@ -341,7 +341,7 @@ async function deleteOrder(id) {
       snackbar.value = {
         value: true,
         color: 'green',
-        text: 'Order deleted successfully!'
+        text: 'Order Deleted successfully!'
       };
     } catch (error) {
       console.log(error);
