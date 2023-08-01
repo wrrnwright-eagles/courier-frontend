@@ -30,8 +30,8 @@ const nodes = ref([]);
 const edges = ref([]);
 const route = useRoute();
 const customers = ref([]);
-const myOrders = ref([]); // new ref for my orders
-const allOrders = ref([]); // new ref for all orders
+const myOrders = ref([]); 
+const allOrders = ref([]); 
 const isCourier = ref(false);
 const newOrder = ref({
   id: undefined,
@@ -47,9 +47,7 @@ const dialog = ref(false);
 const selectedOrderId = ref(null);
 const orderIndex = myOrders.value.findIndex(order => order.id === orderId);
 if (orderIndex !== -1) {
-  // Remove from myOrders
   const completedOrder = myOrders.value.splice(orderIndex, 1)[0];
-  // Add to completedOrders
   completedOrders.value.push(completedOrder);
 }
 const orderId = route.params.orderId; 
@@ -217,6 +215,7 @@ eventBus.on('orderCompleted', (orderId) => {
   </div>
 </v-list>
         </div>
+        
           <div class="order-container">
           <div class="order-title-container">
             <h2 class="order-title">All Orders</h2>
