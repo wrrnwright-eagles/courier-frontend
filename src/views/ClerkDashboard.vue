@@ -10,7 +10,9 @@ import NodeServices from "../services/NodeServices.js";
 import EdgeServices from "../services/EdgeServices.js";
 import courierImage from '../courier.png';
 import UserServices from "../services/UserServices.js";
+import PathServices from "../services/PathServices.js";
 
+const completedOrders = ref([]);
 const route = useRoute();
 const snackbar = ref({
   value: false,
@@ -49,13 +51,22 @@ const newOrder = ref({
   blocks: undefined,
   price: undefined,
 })
+const newPath = ref({
+  id: undefined,
+  path: undefined,
+})
+const paths = ref([]);
 
 onMounted(async () => {
   await getPickupCustomers();
   await getDeliveryCustomers();
   await getOrders();
+  await getNodes();
+  await getEdges();
+  await getPaths();
   couriers.value = await getCouriers();  
   courierUsers.value = await UserServices.getCourierUsers();  
+  completedOrders.value = orders.value.filter(order => order.status === 'completed');
 });
 
 function getCustomerName(id, type) {
@@ -64,7 +75,14 @@ function getCustomerName(id, type) {
   return customer ? customer.name : '';
 }
 
-
+async function getPaths() {
+    try {
+    const response = await PathServices.getPaths();
+    paths.value = response.data;
+  } catch (error) {
+    console.log(error);
+  }
+}
 async function getDeliveryCustomers() {
     try {
     const response = await DeliveryCustomerServices.getDeliveryCustomers();
@@ -225,7 +243,7 @@ if (newOrder.value.courierId && typeof newOrder.value.courierId === 'object' && 
   } catch (error) {
     console.log(error);
   }
-  ///newOrder.value.pathId = paths.value[lastPath].id;
+  newOrder.value.pathId = paths.value[lastPath].id;
   newOrder.value.blocks = (visitedNodes.length - 1);
   newOrder.value.price = ((1.5 * (visitedNodes.length - 1)) + 5);
   try {
@@ -307,6 +325,7 @@ async function updateOrder(order) {
     };
   }
 }
+
 async function deleteOrder(id) {
   const confirmDialog = confirm("Are you sure you want to delete this order?");
   if (confirmDialog) {
@@ -407,14 +426,14 @@ function dijkstra(graph, startNode, endNode) {
       </div>
     </div>
       <v-col cols="12">
-        <v-card-title class="pl-0 text-h4 font-weight-bold">
+        <v-card-title class="pl-0 text-h4 font-weight-bold cool-title">
           Clerk Dashboard
         </v-card-title>
       </v-col>
     </v-row>
     <v-row>
       <v-col cols="14">
-        <div class="order-container rounded" style="background-color: darkgreen;">
+        <div class="order-container" style="background-color: darkgreen;">
           <h2 style="color: white;">Orders</h2>
           <div class="icon">
           </div>
@@ -478,6 +497,33 @@ function dijkstra(graph, startNode, endNode) {
     </v-card-text>
   </v-card>
 </v-dialog>
+
+<div class="order-container" style="background-color: darkgreen;">
+  <h2 style="color: white;">Completed Orders</h2>
+  <div class="icon">
+  </div>
+</div>
+<v-list>
+  <div v-for="order in completedOrders" :key="order.id">
+    <v-list-item>
+      <v-list-item-content>
+        <div class="d-flex justify-space-between align-center">
+          <div>
+            <h4 class="mb-1">{{ getCustomerName(order.pickupCustomerId, 'pickup') }} &#x2794; {{ getCustomerName(order.deliveryCustomerId, 'delivery') }}</h4>
+            <div class="mb-2">
+              <v-chip small color="green">{{ order.blocks }} Blocks</v-chip>
+              <v-chip small color="blue">{{ getCourierName(order.courierId) }}</v-chip>
+              <v-chip small color="red">Price: ${{ order.price }} </v-chip>
+              <v-chip small color="purple">Estimated Time: {{ order.blocks * 3 }} Minutes </v-chip>
+            </div>
+            <div class="mb-1">{{ order.date }}, {{ order.time }}</div>
+          </div>
+        </div>
+      </v-list-item-content>
+    </v-list-item>
+    <v-divider></v-divider> 
+  </div>
+</v-list>
 <v-dialog v-model="isEditOrder">
   <v-card>
     <v-card-title>Edit Order</v-card-title>
@@ -499,6 +545,7 @@ function dijkstra(graph, startNode, endNode) {
   </v-card>
 </v-dialog>
   </v-container>
+  
 </template>
 
 <style scoped>
@@ -530,6 +577,7 @@ function dijkstra(graph, startNode, endNode) {
   border-radius: 30px;
   margin-bottom:10px;
   animation: fade 10s;
+  margin-top: 24px;
 }
 
 .custom-green-button {
@@ -542,6 +590,24 @@ function dijkstra(graph, startNode, endNode) {
   @keyframes fade {
 
   50%  {opacity: 1;}
+}
+
+.cool-title {
+  font-size: 2.5rem; 
+  color: rgb(255, 255, 255);
+  background: -webkit-linear-gradient(45deg, #1faf35, #073209);
+  text-align: center;
+  font-family: 'Roboto Slab', serif;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  border-radius: 30px;
+  font-weight: bold;
+  animation: mymove 5s;
+  padding: 25px;
+  margin-bottom: 25px;
+}
+
+@keyframes mymove {
+  50% {letter-spacing: 10px;}
 }
 
 </style>

@@ -23,7 +23,9 @@ const streetNames = ref([]);
 const pickupCustomers = ref([]);
 const deliveryCustomers = ref([]);
 const couriers = ref([]);
-const snackbar = ref({ show: false, text: '' });
+const startOrderSnackbar = ref({ show: false, text: '' }); 
+const completeOrderDialog = ref({ show: false, text: '', orderId: null });
+
 
 onMounted(async () => {
   await getOrder(route.params.orderId);
@@ -62,14 +64,13 @@ async function getCouriers() {
 function startOrderWithAlert() {
   startTime.value = new Date();
   console.log(`Order started at: ${startTime.value}`);
-  snackbar.value = { show: true, text: 'Order has been started!' };
+  startOrderSnackbar.value = { show: true, text: 'Order has been started!' };
   
   // Hide the snackbar after 3 seconds
   setTimeout(() => {
-    snackbar.value.show = false;
+    startOrderSnackbar.value.show = false;
   }, 3000);
   
-  // Hide the start button
   showStartButton.value = false;
 }
 
@@ -155,27 +156,30 @@ function matchPathToOrder(selectedOrder) {
 }
 
 
-function completeOrder() {
+async function completeOrder() {
   endTime.value = new Date();
-  const elapsedTime = (endTime.value - startTime.value) / 60000; // convert ms to minutes
+  const elapsedTime = (endTime.value - startTime.value) / 60000; 
   console.log(`Order completed at: ${endTime.value}`);
   console.log(`Total time: ${elapsedTime} minutes`);
 
-  if (elapsedTime <= selectedOrder.blocks * 3) {
+  if (elapsedTime <= selectedOrder.value.blocks * 3) {
     let bonusCount = localStorage.getItem("bonusCount");
     bonusCount = bonusCount ? Number(bonusCount) : 0;
     localStorage.setItem("bonusCount", bonusCount + 1);
   }
 
-  // Reset start and end times
   startTime.value = null;
   endTime.value = null;
-  snackbar.value = {
-    show: true,
-    text: 'Are you sure you want to complete this order? This can not be undone',
-    orderId: route.params.orderId,  // Updated this line
-  };
+  completeOrderDialog.value = {
+  show: true,
+  text: 'Are you sure you want to complete this order? This can not be undone',
+  orderId: route.params.orderId,  
+};
+
 }
+
+
+
 
 
 async function confirmCompleteOrder(orderId) {
@@ -186,6 +190,7 @@ async function confirmCompleteOrder(orderId) {
   }
   router.push({ name: 'courierdashboard' });  // Redirect to CourierDashboard
 }
+
 
 
 </script>
@@ -209,20 +214,20 @@ async function confirmCompleteOrder(orderId) {
         <div class="text-container">
           <v-btn v-if="showStartButton" @click="startOrderWithAlert" color="green">Start Order</v-btn>
           <v-snackbar
-  v-model="snackbar.show"
-  :timeout="3000"
-  color="green"
-  top
->
-  {{ snackbar.text }}
-  <v-btn
-    text
-    color="white"
-    @click="snackbar.show = false"
-  >
-    Close
-  </v-btn>
-</v-snackbar>
+        v-model="startOrderSnackbar.show"
+        :timeout="3000"
+        color="green"
+        top
+      >
+        {{ startOrderSnackbar.text }}
+        <v-btn
+          text
+          color="white"
+          @click="startOrderSnackbar.show = false"
+        >
+          Close
+        </v-btn>
+      </v-snackbar>
           <h2 class="title">Delivery Instructions</h2>
           <v-list-item v-for="(step, index) in streetNames" :key="index" class="path-list">
             {{ step }}
@@ -231,29 +236,20 @@ async function confirmCompleteOrder(orderId) {
         <v-btn @click="completeOrder" color="red">Complete Order</v-btn>
       </div>
     </div>
-<v-snackbar
-  v-model="snackbar.show"
-  :timeout="3000"
-  color="green"
-  top
->
-  {{ snackbar.text }}
-  <v-btn
-    text
-    color="white"
-    @click="confirmCompleteOrder(snackbar.orderId)"
-  >
-    Yes
-  </v-btn>
-  <v-btn
-    text
-    color="white"
-    @click="snackbar.show = false"
-  >
-    No
-  </v-btn>
-</v-snackbar>
-
+    <v-dialog v-model="completeOrderDialog.show" persistent>
+  <v-card>
+    <v-card-title class="headline">{{ completeOrderDialog.text }}</v-card-title>
+    <v-card-actions>
+      <v-spacer></v-spacer>
+      <v-btn color="green darken-1" text @click="confirmCompleteOrder(completeOrderDialog.orderId)">
+        Yes
+      </v-btn>
+      <v-btn color="red darken-1" text @click="completeOrderDialog.show = false">
+        No
+      </v-btn>
+    </v-card-actions>
+  </v-card>
+</v-dialog>
   </div>
 </template>
 

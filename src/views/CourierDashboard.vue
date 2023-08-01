@@ -114,8 +114,8 @@ async function getOrders() {
   try {
     const response = await OrderServices.getOrders(route.params.id);
     const courierId = window.localStorage.getItem("courierId");
-    myOrders.value = response.data.filter(order => order.courierId == courierId);
-    completedOrders.value = response.data.filter(order => order.courierId == courierId && order.status === 'complete');
+    myOrders.value = response.data.filter(order => order.courierId == courierId && order.status !== 'completed');
+    completedOrders.value = response.data.filter(order => order.courierId == courierId && order.status === 'completed');
     allOrders.value = response.data.filter(order => order.courierId == null || order.courierId != courierId);
 
 
@@ -129,43 +129,15 @@ async function getOrders() {
   }
 }
 
-async function completeOrder(orderId) {
-  try {
-    // Call the backend to mark the order as complete
-    await OrderServices.completeOrder(orderId);
-
-    // Find the completed order in myOrders
-    const orderIndex = myOrders.value.findIndex(order => order.id === orderId);
-    if (orderIndex !== -1) {
-      // Remove from myOrders and get the completed order
-      const completedOrder = myOrders.value.splice(orderIndex, 1)[0];
-
-      // Find the completed order in allOrders
-      const completedOrderIndex = allOrders.value.findIndex(order => order.id === orderId);
-      if (completedOrderIndex !== -1) {
-        // Remove from allOrders
-        allOrders.value.splice(completedOrderIndex, 1);
-      }
-
-      // Add to completedOrders
-      completedOrders.value.push(completedOrder);
-    }
-  } catch (error) {
-    console.log(error);
-  }
-}
-
 function moveOrderToCompleted(orderId) {
-  // Find the order in allOrders
-  const orderIndex = allOrders.value.findIndex(o => o.id === orderId);
 
-  if (orderIndex !== -1) {
-    // Remove from allOrders
-    const completedOrder = allOrders.value.splice(orderIndex, 1)[0];
-    // Add to completedOrders
+  const myOrderIndex = myOrders.value.findIndex(o => o.id === orderId);
+  if (myOrderIndex !== -1) {
+    const completedOrder = myOrders.value.splice(myOrderIndex, 1)[0];
     completedOrders.value.push(completedOrder);
   }
 }
+
 
 
 
@@ -180,16 +152,14 @@ watch(dialog, async (newVal) => {
     } catch (error) {
       console.log(error);
     }
-    selectedOrderId.value = null;  // Reset selectedOrderId
+    selectedOrderId.value = null;  
   }
 });
-
-
-
 
 eventBus.on('orderCompleted', (orderId) => {
   moveOrderToCompleted(orderId);
 });
+
 </script>
 
 <template>
@@ -219,7 +189,9 @@ eventBus.on('orderCompleted', (orderId) => {
     <v-row>
       <v-col cols="14">
         <div class="order-container">
-          <h2 class="order-title">My Orders</h2>
+          <div class="order-title-container">
+            <h2 class="order-title">My Orders</h2>
+          </div>
           <v-list class="order-list">
   <div v-for="order in myOrders" :key="order.id">
     <v-list-item>
@@ -245,8 +217,10 @@ eventBus.on('orderCompleted', (orderId) => {
   </div>
 </v-list>
         </div>
-        <div class="order-container">
-          <h2 class="order-title">All Orders</h2>
+          <div class="order-container">
+          <div class="order-title-container">
+            <h2 class="order-title">All Orders</h2>
+          </div>
           <v-list class="order-list">
   <div v-for="order in allOrders" :key="order.id">
     <v-list-item>
@@ -274,9 +248,10 @@ eventBus.on('orderCompleted', (orderId) => {
         </div>
       </v-col>
     </v-row>
+
+
     <div class="order-container">
-    <v-col cols="14"></v-col>
-    <h2 class="order-title">Completed</h2>
+    <h2 class="order-title">Completed Orders</h2>
     <v-list class="order-list">
       <div v-for="order in completedOrders" :key="order.id">
         <v-list-item>
@@ -313,11 +288,19 @@ eventBus.on('orderCompleted', (orderId) => {
 
 
 .order-container {
+  display: flex;
+  flex-direction: column;
+  align-items: left;
   text-align: top;
-  padding: 24px;
+  padding-bottom: 24px;
   border-radius: 30px;
-  margin-bottom: 18px;
+  margin-bottom: 30px;
   background-color: darkgreen;
+}
+
+
+.order-title-container {
+  text-align: left;
 }
 
 .order-title {

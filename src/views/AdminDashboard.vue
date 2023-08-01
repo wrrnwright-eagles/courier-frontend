@@ -99,6 +99,8 @@ const newPath = ref({
   path: undefined,
 })
 
+const completedOrders = ref([]);
+
 onMounted(async () => {
   await getDeliveryCustomers();
   await getPickupCustomers();
@@ -108,7 +110,8 @@ onMounted(async () => {
   await getNodes();
   await getEdges();
   await getPaths();
-  courierUsers.value = await UserServices.getCourierUsers();  
+  courierUsers.value = await UserServices.getCourierUsers(); 
+  completedOrders.value = orders.value.filter(order => order.status === 'completed'); 
 });
 
 function getCustomerName(id, type) {
@@ -914,60 +917,69 @@ function dijkstra(graph, startNode, endNode) {
         </v-card-title>
       </v-col>
     </v-row>
+
+    <!-- Orders Section -->
+    <div class="order-container" style="background-color: darkgreen;">
+      <v-row>
+        <v-col cols="14">
+          <div class="rounded p-5" style="background-color: darkgreen;">
+            <v-row class="d-flex justify-space-between align-center" style="color: white;">
+              <div class="d-flex align-center">
+                <h2 class="mr-3">Orders</h2>
+                <v-icon size="x-small" @click="openAddOrder()">
+                  mdi-plus
+                </v-icon>
+              </div>
+              <div class="bill-container rounded" style="background-color: rgb(49, 117, 80);">
+                <v-btn color="transparent" @click="dialog = true" style="color: white;">
+                  <h2>Billing</h2>
+                </v-btn>
+              </div>
+            </v-row>
+          </div>
+        </v-col>
+      </v-row>
+    </div>
+
+    <!-- Orders List -->
+    <div class="order-container" style="background-color: darkgreen;">
+      <v-row>
+        <v-col>
+          <v-list>
+            <div v-for="order in orders" :key="order.id">
+              <v-list-item>
+                <v-list-item-content>
+                  <div class="d-flex justify-space-between align-center">
+                    <div>
+                      <h4 class="mb-1">{{ getCustomerName(order.pickupCustomerId, 'pickup') }} &#x2794; {{ getCustomerName(order.deliveryCustomerId, 'delivery') }}</h4>
+                      <div class="mb-2">
+                        <v-chip small color="green">{{ order.blocks }} Blocks</v-chip>
+                        <v-chip small color="blue">{{ getCourierName(order.courierId) }}</v-chip>
+                        <v-chip small color="red">Price: ${{ order.price }} </v-chip>
+                        <v-chip small color="purple">Estimated Time: {{ order.blocks * 3 }} Minutes </v-chip>
+                      </div>
+                      <div class="mb-1">{{ order.date }}, {{ order.time }}</div>
+                    </div>
+                    <div class="actions">
+                      <v-icon large @click="openEditOrder(order)">
+                        mdi-pencil
+                      </v-icon>
+                      <v-icon large @click="deleteOrder(order.id)">
+                        mdi-trash-can
+                      </v-icon>
+                    </div>
+                  </div>
+                </v-list-item-content>
+              </v-list-item>
+              <v-divider></v-divider> 
+            </div>
+          </v-list>
+        </v-col>
+      </v-row>
+    </div>
+
     <v-row>
-      <v-col cols="14">
-        <div class="order-container rounded p-5" style="background-color: darkgreen;">
-          <v-row class="d-flex justify-space-between align-center" style="color: white;">
-            <div class="d-flex align-center">
-              <h2 class="mr-3">Orders</h2>
-              <v-icon size="x-small" @click="openAddOrder()">
-                mdi-plus
-              </v-icon>
-            </div>
-            <div class="bill-container rounded" style="background-color: rgb(49, 117, 80);">
-              <v-btn color="transparent" @click="dialog = true" style="color: white;">
-  <h2>Billing</h2>
-</v-btn>
-            </div>
-          </v-row>
-        </div>
-      </v-col>
-    </v-row>
-
-
-        <v-list>
-  <div v-for="order in orders" :key="order.id">
-    <v-list-item>
-      <v-list-item-content>
-        <div class="d-flex justify-space-between align-center">
-          <div>
-            <h4 class="mb-1">{{ getCustomerName(order.pickupCustomerId, 'pickup') }} &#x2794; {{ getCustomerName(order.deliveryCustomerId, 'delivery') }}</h4>
-            <div class="mb-2">
-              <v-chip small color="green">{{ order.blocks }} Blocks</v-chip>
-              <v-chip small color="blue">{{ getCourierName(order.courierId) }}</v-chip>
-              <v-chip small color="red">Price: ${{ order.price }} </v-chip>
-              <v-chip small color="purple">Estimated Time: {{ order.blocks * 3 }} Minutes </v-chip>
-            </div>
-            <div class="mb-1">{{ order.date }}, {{ order.time }}</div>
-          </div>
-          <div class="actions">
-            <v-icon large @click="openEditOrder(order)">
-              mdi-pencil
-            </v-icon>
-            <v-icon large @click="deleteOrder(order.id)">
-              mdi-trash-can
-            </v-icon>
-          </div>
-        </div>
-      </v-list-item-content>
-    </v-list-item>
-    <v-divider></v-divider> 
-  </div>
-</v-list>
-
-    
-<v-row>
-  <v-col cols="4">
+      <v-col cols="6" fill-width>
     <div class="courier-container" style="background-color: darkgreen; border-radius: 15px; margin-bottom: 18px;">
       <h2 style="text-align: center; color: white;">Couriers</h2>
       <div class="icon">
@@ -977,41 +989,50 @@ function dijkstra(graph, startNode, endNode) {
       </div>
     </div>
 
-    <v-list>
-      <v-list-item v-for="courier in couriers" :key="courier.id" class="courier-item">
-        <v-list-item-content class="d-flex justify-space-between align-center">
-          <div>
-            <v-chip small color="purple">{{ courier.name }}</v-chip>
-            <v-chip small color="red">{{ courier.courierNumber }}</v-chip>
-          </div>
-          <div>
-            <v-icon size="x-small" @click="openEditCourier(courier)">mdi-pencil</v-icon>
-            <v-icon size="x-small" @click="deleteCourier(courier.id)">mdi-trash-can</v-icon>
-          </div>
-        </v-list-item-content>
-      </v-list-item>
-    </v-list>
+    <div class="courier-container" style="background-color: darkgreen;">
+      <v-list>
+        <v-list-item v-for="courier in couriers" :key="courier.id" class="courier-item">
+          <v-list-item-content class="full-width-flex">
+            <div>
+              <v-chip small color="purple">{{ courier.name }}</v-chip>
+              <v-chip small color="red">{{ courier.courierNumber }}</v-chip>
+            </div>
+            <div>
+              <v-icon size="x-small" @click="openEditCourier(courier)">mdi-pencil</v-icon>
+              <v-icon size="x-small" @click="deleteCourier(courier.id)">mdi-trash-can</v-icon>
+            </div>
+          </v-list-item-content>
+        </v-list-item>
+      </v-list>
+    </div>
+  </v-col>
 
-<div class="clerk-container" style="background-color: darkgreen; border-radius: 15px; margin-bottom: 18px;">
-  <h2 style="text-align: center; color: white;">Clerks</h2>
-  <div class="icon">
-    <v-icon size="x-small" @click="openAddClerk()">mdi-plus</v-icon>
-  </div>
-</div>
-<v-list>
-  <v-list-item v-for="clerk in clerks" :key="clerk.id" class="clerk-item">
-    <v-list-item-content class="d-flex justify-space-between align-center">
-      <div>
-        <v-chip small color="purple">{{ clerk.name }}</v-chip>
-        <v-chip small color="red">{{ clerk.clerkNumber }}</v-chip>
+  <v-col cols="6">
+    <div class="clerk-container" style="background-color: darkgreen; border-radius: 15px; margin-bottom: 18px;">
+      <h2 style="text-align: center; color: white;">Clerks</h2>
+      <div class="icon">
+        <v-icon size="x-small" @click="openAddClerk()">mdi-plus</v-icon>
       </div>
-      <div>
-        <v-icon size="x-small" @click="openEditClerk(clerk)">mdi-pencil</v-icon>
-        <v-icon size="x-small" @click="deleteClerk(clerk.id)">mdi-trash-can</v-icon>
-      </div>
-    </v-list-item-content>
-  </v-list-item>
-</v-list>
+    </div>
+
+    <div class="clerk-container" style="background-color: darkgreen;">
+      <v-list>
+        <v-list-item v-for="clerk in clerks" :key="clerk.id" class="clerk-item">
+          <v-list-item-content class="full-width-flex">
+            <div>
+              <v-chip small color="purple">{{ clerk.name }}</v-chip>
+              <v-chip small color="red">{{ clerk.clerkNumber }}</v-chip>
+            </div>
+            <div>
+              <v-icon size="x-small" @click="openEditClerk(clerk)">mdi-pencil</v-icon>
+              <v-icon size="x-small" @click="deleteClerk(clerk.id)">mdi-trash-can</v-icon>
+            </div>
+          </v-list-item-content>
+        </v-list-item>
+      </v-list>
+    </div>
+  </v-col>
+</v-row>
 
 
 
@@ -1169,8 +1190,8 @@ function dijkstra(graph, startNode, endNode) {
     </v-card-text>
   </v-card>
 </v-dialog>
-</v-col>
-      <v-col cols="8">
+
+      <v-col cols="12">
         <div class="customer-container" style="background-color: darkgreen; border-radius: 15px;">
   <h2 style="text-align: center; color: white;">Customers</h2>
   <div class="icon">
@@ -1203,92 +1224,117 @@ function dijkstra(graph, startNode, endNode) {
 
 
 <v-row>
-  <v-col cols="6">
-    <v-list>
-      <v-list-item v-for="(customer, index) in pickupCustomers.slice(0, 5)" :key="customer.id" class="customer-item">
-        <v-list-item-title class="customer-name">{{ customer.name }}</v-list-item-title>
-        <v-row class="customer-row">
-          <v-col cols="6" class="py-0">
-            <v-list-item-subtitle>Customer Number:</v-list-item-subtitle>
-          </v-col>
-          <v-col cols="6" class="py-0">
-            <v-list-item-subtitle>{{ customer.customerNumber }}</v-list-item-subtitle>
-          </v-col>
-        </v-row>
-        <v-row class="customer-row">
-          <v-col cols="6" class="py-0">
-            <v-list-item-subtitle>Location:</v-list-item-subtitle>
-          </v-col>
-          <v-col cols="6" class="py-0">
-            <v-list-item-subtitle>{{ customer.locationDescription }}</v-list-item-subtitle>
-          </v-col>
-        </v-row>
-        <v-row class="customer-row">
-          <v-col cols="6" class="py-0">
-            <v-list-item-subtitle>Delivery:</v-list-item-subtitle>
-          </v-col>
-          <v-col cols="6" class="py-0">
-            <v-list-item-subtitle>{{ customer.deliveryInstructions }}</v-list-item-subtitle>
-          </v-col>
-        </v-row>
-        <v-list-item-action>
-          <v-icon size="x-small" @click="openEditCustomer(customer)">
-  mdi-pencil
-</v-icon>
-<v-icon size="x-small" @click="deleteCustomer(customer)">
-  mdi-trash-can
-</v-icon>
+  <!-- Customer Container -->
+  <v-col cols="12">
+    <div class="customer-container" style="background-color: darkgreen; border-radius: 15px;">
 
+      <v-row>
+        <v-col cols="6">
+          <v-list>
+            <v-list-item v-for="(customer, index) in pickupCustomers.slice(0, 5)" :key="customer.id" class="customer-item">
+              <v-list-item-title class="customer-name">{{ customer.name }}</v-list-item-title>
+              <v-row class="customer-row">
+                <v-col cols="6" class="py-0">
+                  <v-list-item-subtitle>Customer Number:</v-list-item-subtitle>
+                </v-col>
+                <v-col cols="6" class="py-0">
+                  <v-list-item-subtitle>{{ customer.customerNumber }}</v-list-item-subtitle>
+                </v-col>
+              </v-row>
+              <v-row class="customer-row">
+                <v-col cols="6" class="py-0">
+                  <v-list-item-subtitle>Location:</v-list-item-subtitle>
+                </v-col>
+                <v-col cols="6" class="py-0">
+                  <v-list-item-subtitle>{{ customer.locationDescription }}</v-list-item-subtitle>
+                </v-col>
+              </v-row>
+              <v-row class="customer-row">
+                <v-col cols="6" class="py-0">
+                  <v-list-item-subtitle>Delivery:</v-list-item-subtitle>
+                </v-col>
+                <v-col cols="6" class="py-0">
+                  <v-list-item-subtitle>{{ customer.deliveryInstructions }}</v-list-item-subtitle>
+                </v-col>
+              </v-row>
+              <v-list-item-action>
+                <v-icon size="x-small" @click="openEditCustomer(customer)">mdi-pencil</v-icon>
+                <v-icon size="x-small" @click="deleteCustomer(customer)">mdi-trash-can</v-icon>
+              </v-list-item-action>
+            </v-list-item>
+          </v-list>
+        </v-col>
 
-        </v-list-item-action>
-      </v-list-item>
-    </v-list>
-  </v-col>
-
-  <v-col cols="6">
-    <v-list>
-      <v-list-item v-for="(customer, index) in pickupCustomers.slice(5)" :key="customer.id" class="customer-item">
-        <v-list-item-title class="customer-name">{{ customer.name }}</v-list-item-title>
-        <v-row class="customer-row">
-          <v-col cols="6" class="py-0">
-            <v-list-item-subtitle>Customer Number:</v-list-item-subtitle>
-          </v-col>
-          <v-col cols="6" class="py-0">
-            <v-list-item-subtitle>{{ customer.customerNumber }}</v-list-item-subtitle>
-          </v-col>
-        </v-row>
-        <v-row class="customer-row">
-          <v-col cols="6" class="py-0">
-            <v-list-item-subtitle>Location:</v-list-item-subtitle>
-          </v-col>
-          <v-col cols="6" class="py-0">
-            <v-list-item-subtitle>{{ customer.locationDescription }}</v-list-item-subtitle>
-          </v-col>
-        </v-row>
-        <v-row class="customer-row">
-          <v-col cols="6" class="py-0">
-            <v-list-item-subtitle>Delivery:</v-list-item-subtitle>
-          </v-col>
-          <v-col cols="6" class="py-0">
-            <v-list-item-subtitle>{{ customer.deliveryInstructions }}</v-list-item-subtitle>
-          </v-col>
-        </v-row>
-        <v-list-item-action>
-          <v-icon size="x-small" @click="openEditCustomer(customer)">
-  mdi-pencil
-</v-icon>
-          <v-icon size="x-small" @click="deleteCustomer(customer)">
-            mdi-trash-can
-          </v-icon>
-        </v-list-item-action>
-      </v-list-item>
-    </v-list>
+        <v-col cols="6">
+          <v-list>
+            <v-list-item v-for="(customer, index) in pickupCustomers.slice(5)" :key="customer.id" class="customer-item">
+              <v-list-item-title class="customer-name">{{ customer.name }}</v-list-item-title>
+              <v-row class="customer-row">
+                <v-col cols="6" class="py-0">
+                  <v-list-item-subtitle>Customer Number:</v-list-item-subtitle>
+                </v-col>
+                <v-col cols="6" class="py-0">
+                  <v-list-item-subtitle>{{ customer.customerNumber }}</v-list-item-subtitle>
+                </v-col>
+              </v-row>
+              <v-row class="customer-row">
+                <v-col cols="6" class="py-0">
+                  <v-list-item-subtitle>Location:</v-list-item-subtitle>
+                </v-col>
+                <v-col cols="6" class="py-0">
+                  <v-list-item-subtitle>{{ customer.locationDescription }}</v-list-item-subtitle>
+                </v-col>
+              </v-row>
+              <v-row class="customer-row">
+                <v-col cols="6" class="py-0">
+                  <v-list-item-subtitle>Delivery:</v-list-item-subtitle>
+                </v-col>
+                <v-col cols="6" class="py-0">
+                  <v-list-item-subtitle>{{ customer.deliveryInstructions }}</v-list-item-subtitle>
+                </v-col>
+              </v-row>
+              <v-list-item-action>
+                <v-icon size="x-small" @click="openEditCustomer(customer)">mdi-pencil</v-icon>
+                <v-icon size="x-small" @click="deleteCustomer(customer)">mdi-trash-can</v-icon>
+              </v-list-item-action>
+            </v-list-item>
+          </v-list>
+        </v-col>
+      </v-row>
+    </div>
   </v-col>
 </v-row>
-
       </v-col>
-    </v-row>
+
   </v-container>
+  <div class="completed-order-container" style="background-color: darkgreen;">
+  <h2 style="color: white;">Completed Orders</h2>
+  <div class="icon">
+  </div>
+</div>
+<div class="completed-order-container" style="background-color: darkgreen;">
+  <v-list>
+    <div v-for="order in completedOrders" :key="order.id">
+      <v-list-item>
+        <v-list-item-content>
+          <div class="d-flex justify-space-between align-center">
+            <div>
+              <h4 class="mb-1">{{ getCustomerName(order.pickupCustomerId, 'pickup') }} &#x2794; {{ getCustomerName(order.deliveryCustomerId, 'delivery') }}</h4>
+              <div class="mb-2">
+                <v-chip small color="green">{{ order.blocks }} Blocks</v-chip>
+                <v-chip small color="blue">{{ getCourierName(order.courierId) }}</v-chip>
+                <v-chip small color="red">Price: ${{ order.price }} </v-chip>
+                <v-chip small color="purple">Estimated Time: {{ order.blocks * 3 }} Minutes </v-chip>
+              </div>
+              <div class="mb-1">{{ order.date }}, {{ order.time }}</div>
+            </div>
+          </div>
+        </v-list-item-content>
+      </v-list-item>
+      <v-divider></v-divider> 
+    </div>
+  </v-list>
+</div>
 
 </template>
 
@@ -1309,13 +1355,15 @@ function dijkstra(graph, startNode, endNode) {
   
 }
 
-.courier-name {  
+.courier-item {  
   font-weight: bold;
   margin-bottom: 5px;
+  width: 100%;
 }
 .clerk-name {
   font-weight: bold;
   margin-bottom: 5px;
+  width: 100%
 }
 
 .courier-row,
@@ -1329,7 +1377,16 @@ function dijkstra(graph, startNode, endNode) {
   padding-bottom: px;
   margin-bottom: 2px;
 }
-
+.stretch {
+  flex-grow: 1;
+}
+.completed-order-container {
+  padding: 24px;
+  border-radius: 30px;
+  margin-bottom: 18px;
+  margin-left: 200px;
+  margin-right: 200px;
+}
 .order-container {
   padding: 24px;
   border-radius: 30px;
@@ -1344,9 +1401,10 @@ function dijkstra(graph, startNode, endNode) {
 }
 .clerk-container {
   padding: 10px;
-  margin-top: 40px;
+  margin-top: 30px;
   border-radius: 18px;
 }  
+
 
 .customer-container {
   padding: 10px;
@@ -1394,5 +1452,11 @@ function dijkstra(graph, startNode, endNode) {
   line-height: 1.5; 
   white-space: pre-line;
   margin-right: 10px; 
+}
+
+.full-width-flex {
+  display: flex;
+  justify-content: space-between;
+  width: 100% !important;
 }
 </style>
