@@ -125,18 +125,28 @@ function matchPathToOrder(selectedOrder) {
     for (let b = 0; b < deliveryCustomers.value.length; b++) {
       if (pickupCustomers.value[a].id === selectedOrder.pickupCustomerId) {
         if (deliveryCustomers.value[b].id === selectedOrder.deliveryCustomerId) {
-          pickupOfficeInstructions += "Arrived at Destination - " + pickupCustomers.value[a].deliveryInstructions;
-          deliveryOfficeInstructions += "Arrived at Destination - " + deliveryCustomers.value[b].deliveryInstructions;
+          pickupOfficeInstructions += "Arrived at Pickup Destination - " + pickupCustomers.value[a].deliveryInstructions;
+          deliveryOfficeInstructions += "Arrived at Delivery Destination - " + deliveryCustomers.value[b].deliveryInstructions;
         }
       }
     }
   }
+
+  let setDropLocation = false;
 
   for (let x = 0; x < path.value.length; x++) {
     for (let y = 0; y < nodes.value.length; y++) {
       if (path.value[x] === nodes.value[y].node) {
         streetNames.value[x] = nodes.value[y].streetName;
       }
+      if ((streetNames.value[x] === streetNames.value[x-1]) && (setDropLocation)) {
+          streetNames.value[x] = pickupOfficeInstructions;
+          setDropLocation = false;
+        }
+        if (streetNames.value[x] === streetNames.value[x-1]) {
+          streetNames.value[x] = deliveryOfficeInstructions;
+          setDropLocation = true;
+        }
     }
   }
 
