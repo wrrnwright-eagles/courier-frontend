@@ -25,6 +25,7 @@ const deliveryCustomers = ref([]);
 const couriers = ref([]);
 const startOrderSnackbar = ref({ show: false, text: '' }); 
 const completeOrderDialog = ref({ show: false, text: '', orderId: null });
+const showDeliveryInstructions = ref(false);
 
 
 onMounted(async () => {
@@ -65,13 +66,13 @@ function startOrderWithAlert() {
   startTime.value = new Date();
   console.log(`Order started at: ${startTime.value}`);
   startOrderSnackbar.value = { show: true, text: 'Order has been started!' };
-  
-  // Hide the snackbar after 3 seconds
+
   setTimeout(() => {
     startOrderSnackbar.value.show = false;
   }, 3000);
-  
+
   showStartButton.value = false;
+  showDeliveryInstructions.value = true; 
 }
 
 
@@ -210,48 +211,61 @@ async function confirmCompleteOrder(orderId) {
       <div class="map-section">
         <img src="/Map.png" alt="Map" class="map-image">
       </div>
+      
+
+      <v-btn v-if="showStartButton" @click="startOrderWithAlert" color="green" class="start-order-button">Start Order</v-btn>
       <div class="text-section">
         <div class="text-container">
-          <v-btn v-if="showStartButton" @click="startOrderWithAlert" color="green">Start Order</v-btn>
           <v-snackbar
-        v-model="startOrderSnackbar.show"
-        :timeout="3000"
-        color="green"
-        top
-      >
-        {{ startOrderSnackbar.text }}
-        <v-btn
-          text
-          color="white"
-          @click="startOrderSnackbar.show = false"
-        >
-          Close
-        </v-btn>
-      </v-snackbar>
-          <h2 class="title">Delivery Instructions</h2>
-          <v-list-item v-for="(step, index) in streetNames" :key="index" class="path-list">
-            {{ step }}
-          </v-list-item>
+            v-model="startOrderSnackbar.show"
+            :timeout="3000"
+            color="green"
+            top
+          >
+            {{ startOrderSnackbar.text }}
+            <v-btn
+              text
+              color="white"
+              @click="startOrderSnackbar.show = false"
+            >
+              Close
+            </v-btn>
+          </v-snackbar>
         </div>
+
+        <div class="delivery-instructions-background">
+    <div v-if="showDeliveryInstructions" class="delivery-instructions-container">
+      <h2 class="title">Delivery Instructions</h2>
+      <v-list-item v-for="(step, index) in streetNames" :key="index" class="path-list">
+        {{ step }}
+      </v-list-item>
+      <div class="button-container">
         <v-btn @click="completeOrder" color="red">Complete Order</v-btn>
       </div>
     </div>
-    <v-dialog v-model="completeOrderDialog.show" persistent>
-  <v-card>
-    <v-card-title class="headline">{{ completeOrderDialog.text }}</v-card-title>
-    <v-card-actions>
-      <v-spacer></v-spacer>
-      <v-btn color="green darken-1" text @click="confirmCompleteOrder(completeOrderDialog.orderId)">
-        Yes
-      </v-btn>
-      <v-btn color="red darken-1" text @click="completeOrderDialog.show = false">
-        No
-      </v-btn>
-    </v-card-actions>
-  </v-card>
-</v-dialog>
   </div>
+
+    <v-dialog v-model="completeOrderDialog.show" persistent>
+      <v-card>
+        <v-card-title class="headline">{{ completeOrderDialog.text }}</v-card-title>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="green darken-1" text @click="confirmCompleteOrder(completeOrderDialog.orderId)">
+            Yes
+          </v-btn>
+          <v-btn color="red darken-1" text @click="completeOrderDialog.show = false">
+            No
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+  </div>
+</div>
+</div>
 </template>
+
+
+
 
 
 
@@ -262,15 +276,24 @@ async function confirmCompleteOrder(orderId) {
   display: flex;
   flex-direction: column;
   align-items: center; 
+  border-radius: 30px;
 }
+.delivery-instructions-background {
+    position: absolute; 
+    background-color: #f1f1f3;
+    padding: 10px; 
+    border-radius: 20px; 
+    margin-right: 38px;
+  }
+  
 
 .content-section {
-  display: flex;
-  flex-direction: row;
-  flex: 1;
-  width: 100%;
-  justify-content: space-between;
-}
+    display: flex;
+    flex-direction: row;
+    flex: 1;
+    width: 100%;
+    justify-content: space-between;
+  }
 
 .title {
   text-align: center;
@@ -305,12 +328,7 @@ async function confirmCompleteOrder(orderId) {
   width: 95%;
 }
 
-.order-details v-btn {
-  font-size: 1.5em; 
-  height: auto;
-  padding: 10px 20px; 
-  text-transform: none; 
-}
+
 
 .map-section {
   flex: 1;
@@ -327,6 +345,7 @@ async function confirmCompleteOrder(orderId) {
   width: 100%; 
   height: auto;
   object-fit: contain;
+  border-radius: 60px;
 }
 
 .text-section {
@@ -341,7 +360,28 @@ async function confirmCompleteOrder(orderId) {
   padding-right: 10px;
 }
 
-.text-container{
+.button-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   align-items: center;
+  width: 100%;
 }
+
+.text-container {
+  max-height: 1000px; 
+  overflow-y: auto;
+  border-radius: 48px;
+}
+
+.start-order-button {
+    position: absolute; 
+    top: 40%; 
+    right: 200px;
+    font-size: 2em; 
+    padding: x; 
+    line-height: 1em; 
+    transform: translate(0, -50%); 
+  }
+
 </style>

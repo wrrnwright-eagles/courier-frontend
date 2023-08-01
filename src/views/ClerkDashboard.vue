@@ -56,6 +56,8 @@ const newPath = ref({
   path: undefined,
 })
 const paths = ref([]);
+const pendingOrders = ref([]);
+
 
 onMounted(async () => {
   await getPickupCustomers();
@@ -67,6 +69,7 @@ onMounted(async () => {
   couriers.value = await getCouriers();  
   courierUsers.value = await UserServices.getCourierUsers();  
   completedOrders.value = orders.value.filter(order => order.status === 'completed');
+    pendingOrders.value = orders.value.filter(order => order.status === null);
 });
 
 function getCustomerName(id, type) {
@@ -146,12 +149,15 @@ function getCourierName(id) {
 
 async function getOrders() {
     try {
-    const response = await OrderServices.getOrders(route.params.id);
-    orders.value = response.data;
-  } catch (error) {
-    console.log(error);
-  }
+        const response = await OrderServices.getOrders(route.params.id);
+        orders.value = response.data;
+    } catch (error) {
+        console.log(error);
+    }
 }
+
+
+
 
 async function getNodes() {
     try {
@@ -431,6 +437,7 @@ function dijkstra(graph, startNode, endNode) {
         </v-card-title>
       </v-col>
     </v-row>
+
     <v-row>
       <v-col cols="14">
         <div class="order-container" style="background-color: darkgreen;">
@@ -439,7 +446,7 @@ function dijkstra(graph, startNode, endNode) {
           </div>
         </div>
         <v-list>
-  <div v-for="order in orders" :key="order.id">
+          <div v-for="order in pendingOrders" :key="order.id">
     <v-list-item>
       <v-list-item-content>
         <div class="d-flex justify-space-between align-center">
@@ -469,6 +476,7 @@ function dijkstra(graph, startNode, endNode) {
 </v-list>
       </v-col>
     </v-row>
+    
     <v-row justify="center">
       <v-col cols="auto">
         <v-btn class="mt-3 custom-green-button" large dark @click="openAddOrder">
