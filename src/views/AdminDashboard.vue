@@ -13,6 +13,7 @@ import courierImage from '../courier.png';
 import { jsPDF } from "jspdf";
 import UserServices from "../services/UserServices.js";
 
+const pendingOrders = ref([]);
 const courierUsers = ref([]);
 const route = useRoute();
 const snackbar = ref({
@@ -105,13 +106,17 @@ onMounted(async () => {
   await getDeliveryCustomers();
   await getPickupCustomers();
   couriers.value = await getCouriers();  
+  clerks.value = await getClerks();
+  orders.value = await getOrders();
   await getOrders();
   await getClerks();
+  await getCouriers();
   await getNodes();
   await getEdges();
   await getPaths();
   courierUsers.value = await UserServices.getCourierUsers(); 
-  completedOrders.value = orders.value.filter(order => order.status === 'completed'); 
+  completedOrders.value = orders.value.filter(order => order.status === 'completed');
+    pendingOrders.value = orders.value.filter(order => order.status === null);
 });
 
 function getCustomerName(id, type) {
@@ -142,7 +147,7 @@ async function getCouriers() {
     const couriersResponse = await CourierServices.getCouriers();
     const courierUsersResponse = await UserServices.getCourierUsers(); 
 
-    const couriers = couriersResponse.data.map((courier) => ({
+    const couriersData = couriersResponse.data.map((courier) => ({
       id: courier.id,
       name: courier.name,
       courierNumber: courier.courierNumber,
@@ -156,12 +161,14 @@ async function getCouriers() {
         courierNumber: user.id.toString(),
       }));
 
-    return [...couriers, ...courierUsers];
+    couriers.value = [...couriersData, ...courierUsers];
+    couriers = ref(couriers.value);  // create a new ref
   } catch (error) {
     console.log(error);
     return [];
   }
 }
+
 
 function getCourierName(id) {
   if (couriers.value && couriers.value.length > 0) {
@@ -182,11 +189,11 @@ function getCourierName(id) {
 
 async function getOrders() {
     try {
-    const response = await OrderServices.getOrders(route.params.id);
-    orders.value = response.data;
-  } catch (error) {
-    console.log(error);
-  }
+        const response = await OrderServices.getOrders(route.params.id);
+        orders.value = response.data;
+    } catch (error) {
+        console.log(error);
+    }
 }
 
 async function getClerks() {
@@ -328,7 +335,7 @@ async function addCourier() {
       color: 'Black',
       text: 'Added Successfully!'
     };
-    getCouriers();
+    await getCouriers(); 
   } catch (error) {
     console.log(error);
     snackbar.value = {
@@ -338,6 +345,7 @@ async function addCourier() {
     };
   }
 }
+
 
 function openAddCourier() {
   console.log("openAddCourieris called");
@@ -653,7 +661,6 @@ async function deleteCustomer(customer) {
 async function addOrder() {
   isAddOrder.value = false;
   delete newOrder.value.id;
-// if the courierId is an object, extract the id from it
 if (newOrder.value.courierId && typeof newOrder.value.courierId === 'object' && newOrder.value.courierId.id) {
   newOrder.value.courierId = newOrder.value.courierId.id;
 }
@@ -727,13 +734,13 @@ if (newOrder.value.courierId && typeof newOrder.value.courierId === 'object' && 
   newOrder.value.price = ((1.5 * (visitedNodes.length - 1)) + 5);
   try {
     console.log('Order to be sent: ', newOrder.value);
-await OrderServices.addOrder(newOrder.value);
+    await OrderServices.addOrder(newOrder.value);
     snackbar.value = {
       value: true,
       color: 'green',
       text: 'Added Successfully!'
     };
-    getOrders();
+    await getOrders(); 
   } catch (error) {
     console.log(error);
     snackbar.value = {
@@ -912,8 +919,8 @@ function dijkstra(graph, startNode, endNode) {
         </div>
       </div>
       <v-col cols="12">
-        <v-card-title class="pl-0 text-h4 font-weight-bold">
-          Dashboard
+        <v-card-title class="pl-0 text-h4 font-weight-bold cool-title">
+          Admin Dashboard
         </v-card-title>
       </v-col>
     </v-row>
@@ -946,7 +953,7 @@ function dijkstra(graph, startNode, endNode) {
       <v-row>
         <v-col>
           <v-list>
-            <div v-for="order in orders" :key="order.id">
+            <div v-for="order in pendingOrders" :key="order.id">
               <v-list-item>
                 <v-list-item-content>
                   <div class="d-flex justify-space-between align-center">
@@ -990,20 +997,20 @@ function dijkstra(graph, startNode, endNode) {
     </div>
 
     <div class="courier-container" style="background-color: darkgreen;">
-      <v-list>
-        <v-list-item v-for="courier in couriers" :key="courier.id" class="courier-item">
-          <v-list-item-content class="full-width-flex">
-            <div>
-              <v-chip small color="purple">{{ courier.name }}</v-chip>
-              <v-chip small color="red">{{ courier.courierNumber }}</v-chip>
-            </div>
-            <div>
-              <v-icon size="x-small" @click="openEditCourier(courier)">mdi-pencil</v-icon>
-              <v-icon size="x-small" @click="deleteCourier(courier.id)">mdi-trash-can</v-icon>
-            </div>
-          </v-list-item-content>
-        </v-list-item>
-      </v-list>
+      <v-list style="width: 100%;">
+  <v-list-item v-for="courier in couriers" :key="courier.id" class="courier-item">
+    <v-list-item-content class="full-width-flex">
+      <div>
+        <v-chip small color="purple">{{ courier.name }}</v-chip>
+        <v-chip small color="red">{{ courier.courierNumber }}</v-chip>
+      </div>
+      <div>
+        <v-icon size="x-small" @click="openEditCourier(courier)">mdi-pencil</v-icon>
+        <v-icon size="x-small" @click="deleteCourier(courier.id)">mdi-trash-can</v-icon>
+      </div>
+    </v-list-item-content>
+  </v-list-item>
+</v-list>
     </div>
   </v-col>
 
@@ -1016,20 +1023,21 @@ function dijkstra(graph, startNode, endNode) {
     </div>
 
     <div class="clerk-container" style="background-color: darkgreen;">
-      <v-list>
-        <v-list-item v-for="clerk in clerks" :key="clerk.id" class="clerk-item">
-          <v-list-item-content class="full-width-flex">
-            <div>
-              <v-chip small color="purple">{{ clerk.name }}</v-chip>
-              <v-chip small color="red">{{ clerk.clerkNumber }}</v-chip>
-            </div>
-            <div>
-              <v-icon size="x-small" @click="openEditClerk(clerk)">mdi-pencil</v-icon>
-              <v-icon size="x-small" @click="deleteClerk(clerk.id)">mdi-trash-can</v-icon>
-            </div>
-          </v-list-item-content>
-        </v-list-item>
-      </v-list>
+      <v-list style="width: 100%;">
+  <v-list-item v-for="clerk in clerks" :key="clerk.id" class="clerk-item">
+    <v-list-item-content class="full-width-flex">
+      <div>
+        <v-chip small color="purple">{{ clerk.name }}</v-chip>
+        <v-chip small color="red">{{ clerk.clerkNumber }}</v-chip>
+      </div>
+      <div>
+        <v-icon size="x-small" @click="openEditClerk(clerk)">mdi-pencil</v-icon>
+        <v-icon size="x-small" @click="deleteClerk(clerk.id)">mdi-trash-can</v-icon>
+      </div>
+    </v-list-item-content>
+  </v-list-item>
+</v-list>
+
     </div>
   </v-col>
 </v-row>
@@ -1384,13 +1392,15 @@ function dijkstra(graph, startNode, endNode) {
   padding: 24px;
   border-radius: 30px;
   margin-bottom: 18px;
-  margin-left: 200px;
-  margin-right: 200px;
+  margin-left: 230px;
+  margin-right: 230px;
 }
 .order-container {
   padding: 24px;
   border-radius: 30px;
   margin-bottom: 18px;
+  margin-top: 30px;
+
 }
 
 .courier-container  {
@@ -1410,7 +1420,7 @@ function dijkstra(graph, startNode, endNode) {
   padding: 10px;
   border-radius: 18px;
   margin-bottom: 10px;
-  margin-top: 30px;
+  margin-top: 10px;
 }
 
 .clerk-col {
@@ -1457,6 +1467,26 @@ function dijkstra(graph, startNode, endNode) {
 .full-width-flex {
   display: flex;
   justify-content: space-between;
-  width: 100% !important;
+  align-items: center; 
+  width: 100%; 
 }
+
+.cool-title {
+    font-size: 2.5rem; 
+    color: rgb(255, 255, 255);
+    background: -webkit-linear-gradient(45deg, #1faf35, #073209);
+    text-align: center;
+    font-family: 'Roboto Slab', serif;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    border-radius: 30px;
+    font-weight: bold;
+    animation: mymove 5s;
+    padding: 25px;
+    margin-bottom: 25px;
+    max-width: 50%;
+    margin: 0 auto;
+  }
+  @keyframes mymove {
+    50% {letter-spacing: 10px;}
+  }
 </style>
