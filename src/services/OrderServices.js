@@ -1,5 +1,6 @@
 import apiClient from "./services";
 
+
 export default {
   getOrders() {
     return apiClient.get("/orders");
@@ -34,8 +35,10 @@ export default {
   assignOrderToCourier(orderId, courierId) {
     return apiClient.put("/orders/" + orderId + "/assign", { courierId: courierId });
   },
-  completeOrder(orderId) {
-    return apiClient.put("/orders/" + orderId + "/complete");
+
+  completeOrder(id) {
+    return apiClient.put(`/orders/${id}/complete`);
   }
+  
   
 };
